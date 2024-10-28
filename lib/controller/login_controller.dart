@@ -6,7 +6,7 @@ class LoginController {
   Future<bool> login(User user) async {
     try {
       final response = await http.post(
-        Uri.parse('http://100.88.108.48/dartdb/dartdb.php'),
+        Uri.parse('http://192.168.100.149/dartdb/dartdb.php'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(user.toJson()),
       );

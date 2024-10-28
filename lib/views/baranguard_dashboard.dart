@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'request_page.dart'; // Import the request_page.dart file
 import 'dart:async';
 
 class BaranguardDashboard extends StatefulWidget {
@@ -29,23 +30,22 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
   void _onIconTap(String iconName) {
     switch (iconName) {
       case 'home':
-      // Navigate to Home
         print('Home icon tapped');
         break;
       case 'news':
-      // Navigate to News
         print('Request icon tapped');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => RequestPage()), // Navigate to RequestPage
+        );
         break;
       case 'profile':
-      // Navigate to Profile
         print('Complaints icon tapped');
         break;
       case 'report':
-      // Navigate to Reports
         print('Reports icon tapped');
         break;
       case 'contacts':
-      // Navigate to Contacts
         print('Contacts icon tapped');
         break;
       default:
@@ -102,15 +102,17 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               leading: Icon(Icons.mail),
               title: Text('Request'),
               onTap: () {
-                // Handle Settings tap
-                Navigator.pop(context); // Close the drawer after selection
+                Navigator.pop(context); // Close the drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RequestPage()), // Navigate to RequestPage
+                );
               },
             ),
             ListTile(
               leading: Icon(Icons.newspaper),
               title: Text('Complaints'),
               onTap: () {
-                // Handle Logout tap
                 Navigator.pop(context); // Close the drawer after selection
               },
             ),
@@ -118,7 +120,6 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               leading: Icon(Icons.report_problem),
               title: Text('Reports'),
               onTap: () {
-                // Handle Logout tap
                 Navigator.pop(context); // Close the drawer after selection
               },
             ),
@@ -126,7 +127,6 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               leading: Icon(Icons.contact_emergency),
               title: Text('Contacts'),
               onTap: () {
-                // Handle Logout tap
                 Navigator.pop(context); // Close the drawer after selection
               },
             ),
@@ -142,7 +142,6 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               leading: Icon(Icons.logout),
               title: Text('Logout'),
               onTap: () {
-                // Handle Logout tap
                 Navigator.pop(context); // Close the drawer after selection
               },
             ),
