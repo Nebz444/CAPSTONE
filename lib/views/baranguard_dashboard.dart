@@ -1,3 +1,4 @@
+import 'package:baranguard/views/complaints.dart';
 import 'package:flutter/material.dart';
 import 'request_page.dart'; // Import the request_page.dart file
 import 'dart:async';
@@ -32,7 +33,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
       case 'home':
         print('Home icon tapped');
         break;
-      case 'news':
+      case 'mail':
         print('Request icon tapped');
         Navigator.push(
           context,
@@ -41,6 +42,10 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
         break;
       case 'profile':
         print('Complaints icon tapped');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ComplaintsForm()), // Navigate to RequestPage
+        );
         break;
       case 'report':
         print('Reports icon tapped');
@@ -52,7 +57,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
         break;
     }
   }
-
+//hamburger part
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,14 +173,14 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => _onIconTap('news'), // Handle News icon tap
+                  onTap: () => _onIconTap('mail'), // Handle News icon tap
                   child: Container(
                     padding: EdgeInsets.all(12), // Add padding for better tap area
                     decoration: BoxDecoration(
                       color: Colors.redAccent, // Bright background color
                       borderRadius: BorderRadius.circular(12), // Rounded corners
                     ),
-                    child: Icon(Icons.newspaper, color: Colors.white, size: 25), // Increase icon size
+                    child: Icon(Icons.mail, color: Colors.white, size: 25), // Increase icon size
                   ),
                 ),
                 GestureDetector(
