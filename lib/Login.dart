@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:baranguard/views/baranguard_dashboard.dart';  // Import the dashboard screen
+import 'package:baranguard/signup.dart';  // Import the signup screen
 import 'controller/login_controller.dart';
-import 'main.dart';
 import 'model/users_model.dart';
 
 void main() {
   runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Baranguard',
+      debugShowCheckedModeBanner: false, // Add this line
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: BaranguardLoginPage(),
+    );
+  }
 }
 
 class BaranguardLoginPage extends StatefulWidget {
@@ -113,18 +127,22 @@ class _BaranguardLoginPageState extends State<BaranguardLoginPage> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Colors.blue,
                   ),
                 ),
               ),
               SizedBox(height: 20),
 
-              // Sign up Text
+              // Sign Up Text as clickable link
               GestureDetector(
                 onTap: () {
-                  // Navigate to sign up page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SignUpPage()),
+                  );
                 },
                 child: Text(
-                  'sign up',
+                  'Sign up',
                   style: TextStyle(
                     color: Colors.blue,
                     fontSize: 16,

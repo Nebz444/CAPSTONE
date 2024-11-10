@@ -69,13 +69,58 @@ class _CedulaFormState extends State<CedulaForm> {
       });
     }
   }
-
   // Form submission function
+
+  //Confirmation
+  Future<void> confirmSubmission() async {
+    // Show the confirmation dialog to the user
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Submission"),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text("Full Name: ${_fullNameController.text}"),
+              Text("Age: ${_ageController.text}"),
+              Text("Birthday: ${_birthdayController.text}"),
+              Text("Birthplace: ${_birthplaceController.text}"),
+              Text("House Number: ${_houseNumberController.text}"),
+              Text("Street: ${_streetController.text}"),
+              Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
+              Text("Gender: $_selectedGender"),
+              Text("Civil Status: $_selectedCivilStatus"),
+              Text("Height: ${_heightController.text} cm"),
+              Text("Weight: ${_weightController.text} kg"),
+              Text("Contact Number: ${_contactNumberController.text}"),
+              Text("Emergency Contact: ${_emergencyNumberController.text}"),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("Edit"),
+            onPressed: () => Navigator.of(context).pop(false), // Close dialog and allow editing
+          ),
+          TextButton(
+            child: const Text("Confirm"),
+            onPressed: () => Navigator.of(context).pop(true), // Close dialog and proceed with submission
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await submitForm();
+    }
+  }
+  //
+
 
 // Modify the submitForm function
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final apiUrl = 'http://192.168.100.149/NEW/html/permits/permitdatabase/barangaycedula.php';
+      final apiUrl = 'http://192.168.100.149/dartdb/cedula.php';
 
       final formData = {
         'full_name': _fullNameController.text,
@@ -276,9 +321,10 @@ class _CedulaFormState extends State<CedulaForm> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red[900],
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 15, horizontal: 30),
                     ),
-                    onPressed: submitForm,
+                    onPressed: confirmSubmission,
                     child: const Text(
                       'Submit',
                       style: TextStyle(fontSize: 18, color: Colors.white),

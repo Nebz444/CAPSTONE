@@ -1,6 +1,7 @@
 import 'package:baranguard/views/complaints.dart';
 import 'package:flutter/material.dart';
 import 'request_page.dart'; // Import the request_page.dart file
+import 'package:baranguard/Login.dart';
 import 'dart:async';
 
 class BaranguardDashboard extends StatefulWidget {
@@ -34,17 +35,15 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
         print('Home icon tapped');
         break;
       case 'mail':
-        print('Request icon tapped');
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => RequestPage()), // Navigate to RequestPage
         );
         break;
       case 'profile':
-        print('Complaints icon tapped');
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ComplaintsForm()), // Navigate to RequestPage
+          MaterialPageRoute(builder: (context) => ComplaintsForm()), // Navigate to ComplaintsForm
         );
         break;
       case 'report':
@@ -57,7 +56,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
         break;
     }
   }
-//hamburger part
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,6 +118,10 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               title: Text('Complaints'),
               onTap: () {
                 Navigator.pop(context); // Close the drawer after selection
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ComplaintsForm()), // Navigate to ComplaintsForm
+                );
               },
             ),
             ListTile(
@@ -147,7 +150,11 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               leading: Icon(Icons.logout),
               title: Text('Logout'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer after selection
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => BaranguardLoginPage()), // Navigate to BaranguardLoginPage
+                      (Route<dynamic> route) => false, // Clear navigation stack
+                );
               },
             ),
           ],
@@ -164,56 +171,56 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
                 GestureDetector(
                   onTap: () => _onIconTap('home'), // Handle Home icon tap
                   child: Container(
-                    padding: EdgeInsets.all(12), // Add padding for better tap area
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent, // Bright background color
-                      borderRadius: BorderRadius.circular(12), // Rounded corners
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.home, color: Colors.white, size: 25), // Increase icon size
+                    child: Icon(Icons.home, color: Colors.white, size: 25),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => _onIconTap('mail'), // Handle News icon tap
                   child: Container(
-                    padding: EdgeInsets.all(12), // Add padding for better tap area
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent, // Bright background color
-                      borderRadius: BorderRadius.circular(12), // Rounded corners
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.mail, color: Colors.white, size: 25), // Increase icon size
+                    child: Icon(Icons.mail, color: Colors.white, size: 25),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => _onIconTap('profile'), // Handle Profile icon tap
                   child: Container(
-                    padding: EdgeInsets.all(12), // Add padding for better tap area
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent, // Bright background color
-                      borderRadius: BorderRadius.circular(12), // Rounded corners
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.person, color: Colors.white, size: 25), // Increase icon size
+                    child: Icon(Icons.person, color: Colors.white, size: 25),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => _onIconTap('report'), // Handle Report icon tap
                   child: Container(
-                    padding: EdgeInsets.all(12), // Add padding for better tap area
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent, // Bright background color
-                      borderRadius: BorderRadius.circular(12), // Rounded corners
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.report_problem, color: Colors.white, size: 25), // Increase icon size
+                    child: Icon(Icons.report_problem, color: Colors.white, size: 25),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => _onIconTap('contacts'), // Handle Contacts icon tap
                   child: Container(
-                    padding: EdgeInsets.all(12), // Add padding for better tap area
+                    padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent, // Bright background color
-                      borderRadius: BorderRadius.circular(12), // Rounded corners
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.phone_android_rounded, color: Colors.white, size: 25), // Increase icon size
+                    child: Icon(Icons.phone_android_rounded, color: Colors.white, size: 25),
                   ),
                 ),
               ],

@@ -63,13 +63,56 @@ class _BarangayIDState extends State<BarangayID> {
     }
   }
 
-  Future<void> submitForm() async {
+  //Confirmation
+  Future<void> confirmSubmission() async {
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Submission"),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text("Name: ${_fullNameController.text}"),
+              Text("Age: ${_ageController.text}"),
+              Text("Birthday: ${_birthdayController.text}"),
+              Text("Birthplace: ${_birthplaceController.text}"),
+              Text("House Number: ${_houseNumberController.text}"),
+              Text("Street: ${_streetController.text}"),
+              Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
+              Text("Gender: ${_selectedGender ?? 'N/A'}"),
+              Text("Civil Status: ${_selectedCivilStatus ?? 'N/A'}"),
+              Text("Height: ${_heightController.text} cm"),
+              Text("Weight: ${_weightController.text} kg"),
+              Text("Contact Number: ${_contactNumberController.text}"),
+              Text("Emergency Contact: ${_emergencyNumberController.text}"),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("Edit"),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+          TextButton(
+            child: const Text("Confirm"),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      submitForm();
+    }
+  }
+
+    Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      final apiUrl = 'http://192.168.100.149/NEW/html/permits/permitdatabase/barangayid.php';
+      final apiUrl = 'http://192.168.100.149/dartdb/barangay_id.php';
 
       final formData = {
         'full_name': _fullNameController.text,
@@ -155,8 +198,11 @@ class _BarangayIDState extends State<BarangayID> {
                   child: _isLoading
                       ? CircularProgressIndicator()
                       : ElevatedButton(
-                    onPressed: submitForm,
-                    child: const Text('Submit'),
+                    onPressed: confirmSubmission,
+                    child: const Text(
+                      'Submit',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red[900],
                       padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),

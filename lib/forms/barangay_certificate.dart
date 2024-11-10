@@ -54,14 +54,64 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
     if (pickedDate != null) {
       setState(() {
         // Format the date manually
-        _birthdayController.text = "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+        _birthdayController.text =
+        "${pickedDate.year}-${pickedDate.month.toString().padLeft(
+            2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
       });
     }
   }
 
+  //Confirmation
+  Future<void> confirmSubmission() async {
+    // Show the confirmation dialog to the user
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) =>
+          AlertDialog(
+            title: const Text("Confirm Submission"),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: <Widget>[
+                  Text("Name: ${_fullNameController.text}"),
+                  Text("Age: ${_ageController.text}"),
+                  Text("Birthday: ${_birthdayController.text}"),
+                  Text("Birthplace: ${_birthplaceController.text}"),
+                  Text("House Number: ${_houseNumberController.text}"),
+                  Text("Street: ${_streetController.text}"),
+                  Text("Subdivision: ${_subdivisionController.text.isEmpty
+                      ? 'N/A'
+                      : _subdivisionController.text}"),
+                  Text("Years Resided: ${_yearsResidedController.text}"),
+                  Text("Purpose: ${_selectedPurpose == 'Other'
+                      ? _otherPurposeController.text
+                      : _selectedPurpose}"),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("Edit"),
+                onPressed: () => Navigator.of(context).pop(
+                    false), // Close dialog and allow editing
+              ),
+              TextButton(
+                child: const Text("Confirm"),
+                onPressed: () => Navigator.of(context).pop(
+                    true), // Close dialog and proceed with submission
+              ),
+            ],
+          ),
+    );
+
+    if (confirm == true) {
+      await submitForm();
+    }
+  }
+  //
+
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final apiUrl = 'http://192.168.100.149/NEW/html/permits/permitdatabase/barangaycertificate.php';
+      final apiUrl = 'http://192.168.100.149/dartdb/barangay_certificate.php';
 
       // Prepare form data with conditional inclusion of otherInput
       final formData = {
@@ -72,7 +122,9 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
         'bplace': _birthplaceController.text,
         'housenum': _houseNumberController.text,
         'street': _streetController.text,
-        'subdivision': _subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text,
+        'subdivision': _subdivisionController.text.isEmpty
+            ? 'N/A'
+            : _subdivisionController.text,
         'years': parseInt(_yearsResidedController.text)?.toString() ?? '',
         'usertype': _selectedPurpose,
       };
@@ -110,6 +162,7 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,15 +181,23 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
               children: [
                 TextFormField(
                   controller: _fullNameController,
-                  decoration: InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()),
-                  validator: (value) => value!.isEmpty ? 'Please enter your full name' : null,
+                  decoration: InputDecoration(
+                      labelText: 'Full Name', border: OutlineInputBorder()),
+                  validator: (value) =>
+                  value!.isEmpty
+                      ? 'Please enter your full name'
+                      : null,
                 ),
                 SizedBox(height: 15),
                 TextFormField(
                   controller: _ageController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'Age', border: OutlineInputBorder()),
-                  validator: (value) => parseInt(value!) == null ? 'Enter a valid age' : null,
+                  decoration: InputDecoration(
+                      labelText: 'Age', border: OutlineInputBorder()),
+                  validator: (value) =>
+                  parseInt(value!) == null
+                      ? 'Enter a valid age'
+                      : null,
                 ),
                 SizedBox(height: 15),
                 TextFormField(
@@ -149,8 +210,11 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                       onPressed: () => _selectDate(context),
                     ),
                   ),
-                  readOnly: true, // User cannot type directly, only pick date
-                  validator: (value) => value!.isEmpty ? 'Please select your birthday' : null,
+                  readOnly: true,
+                  validator: (value) =>
+                  value!.isEmpty
+                      ? 'Please select your birthday'
+                      : null,
                 ),
                 SizedBox(height: 15),
                 TextFormField(
@@ -159,7 +223,10 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                     labelText: 'Birthplace',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => value!.isEmpty ? 'Please enter your birthplace' : null,
+                  validator: (value) =>
+                  value!.isEmpty
+                      ? 'Please enter your birthplace'
+                      : null,
                 ),
                 const SizedBox(height: 15),
                 TextFormField(
@@ -168,7 +235,10 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                     labelText: 'House Number',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => value!.isEmpty ? 'Please enter house number' : null,
+                  validator: (value) =>
+                  value!.isEmpty
+                      ? 'Please enter house number'
+                      : null,
                 ),
                 const SizedBox(height: 15),
                 TextFormField(
@@ -177,7 +247,10 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                     labelText: 'Street',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => value!.isEmpty ? 'Please enter street name' : null,
+                  validator: (value) =>
+                  value!.isEmpty
+                      ? 'Please enter street name'
+                      : null,
                 ),
                 const SizedBox(height: 15),
                 TextFormField(
@@ -195,7 +268,10 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                     labelText: 'Years Resided at Address',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => parseInt(value!) == null ? 'Enter valid years' : null,
+                  validator: (value) =>
+                  parseInt(value!) == null
+                      ? 'Enter valid years'
+                      : null,
                 ),
                 const SizedBox(height: 15),
                 DropdownButtonFormField<String>(
@@ -214,10 +290,11 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                     'SSS',
                     'Other'
                   ]
-                      .map((purpose) => DropdownMenuItem(
-                    value: purpose,
-                    child: Text(purpose),
-                  ))
+                      .map((purpose) =>
+                      DropdownMenuItem(
+                        value: purpose,
+                        child: Text(purpose),
+                      ))
                       .toList(),
                   onChanged: (newValue) {
                     setState(() {
@@ -226,7 +303,7 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                     });
                   },
                 ),
-                if (_showOtherPurposeField) // Show this field only if "Other" is selected
+                if (_showOtherPurposeField)
                   Padding(
                     padding: const EdgeInsets.only(top: 15.0),
                     child: TextFormField(
@@ -235,7 +312,10 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                         labelText: 'Please specify other purpose',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) => value!.isEmpty ? 'Please specify the purpose' : null,
+                      validator: (value) =>
+                      value!.isEmpty
+                          ? 'Please specify the purpose'
+                          : null,
                     ),
                   ),
                 const SizedBox(height: 20),
@@ -243,9 +323,10 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red[900],
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 15, horizontal: 30),
                     ),
-                    onPressed: submitForm,
+                    onPressed: confirmSubmission, // Call confirmSubmission here
                     child: const Text(
                       'Submit',
                       style: TextStyle(fontSize: 18, color: Colors.white),

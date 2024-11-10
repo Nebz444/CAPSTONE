@@ -44,10 +44,53 @@ class _IndigencyFormState extends State<IndigencyForm> {
     super.dispose();
   }
 
+  // Confirmation dialog before submission
+  Future<void> confirmSubmission() async {
+    // Show the confirmation dialog to the user
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Submission"),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text("Manager Name: ${_managerNameController.text}"),
+              Text("Age: ${_ageController.text}"),
+              Text("Birthday: ${_birthdayController.text}"),
+              Text("House Number: ${_houseNumberController.text}"),
+              Text("Street: ${_streetController.text}"),
+              Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
+              Text("Patient Name: ${_patientNameController.text}"),
+              Text("Relation: ${_relationController.text}"),
+              Text("Purpose: ${_selectedPurpose == 'Other' ? _otherPurposeController.text : _selectedPurpose}"),
+              if (_selectedPurpose == 'Other')
+                Text("Other Input: ${_otherPurposeController.text}"), // Show "Other" input if applicable
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("Edit"),
+            onPressed: () => Navigator.of(context).pop(false), // Close dialog and allow editing
+          ),
+          TextButton(
+            child: const Text("Confirm"),
+            onPressed: () => Navigator.of(context).pop(true), // Close dialog and proceed with submission
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await submitForm();
+    }
+  }
+  //
+
   // Submission logic (updated)
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final apiUrl = 'http://192.168.100.149/NEW/html/permits/permitdatabase/certificateofindigency.php';
+      final apiUrl = 'http://192.168.100.149/dartdb/indigency_form.php';
 
       // Determine purpose and set otherInput if necessary
       String purpose = _selectedPurpose == 'Other' ? _otherPurposeController.text : _selectedPurpose!;
@@ -234,9 +277,10 @@ class _IndigencyFormState extends State<IndigencyForm> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red[900],
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 15, horizontal: 30),
                     ),
-                    onPressed: submitForm,
+                    onPressed: confirmSubmission,
                     child: const Text(
                       'Submit',
                       style: TextStyle(fontSize: 18, color: Colors.white),

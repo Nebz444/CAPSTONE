@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert'; // For encoding JSON
 
 class BusinessForm extends StatefulWidget {
   final String formType;
@@ -35,29 +34,66 @@ class _BusinessFormState extends State<BusinessForm> {
     super.dispose();
   }
 
+// Confirmation dialog before submission for business permit form
+  Future<void> confirmSubmission() async {
+    // Show the confirmation dialog to the user
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Submission"),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text("Business Name: ${_businessNameController.text}"),
+              Text("Owner Name: ${_ownerNameController.text}"),
+              Text("House Number: ${_houseNumberController.text}"),
+              Text("Street: ${_streetController.text}"),
+              Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
+              Text("Business Type: ${_businessTypeController.text}"),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("Edit"),
+            onPressed: () => Navigator.of(context).pop(false), // Close dialog and allow editing
+          ),
+          TextButton(
+            child: const Text("Confirm"),
+            onPressed: () => Navigator.of(context).pop(true), // Close dialog and proceed with submission
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await submitForm();
+    }
+  }
+
   // Form submission function
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final apiUrl = 'http://192.168.100.149/NEW/html/permits/permitdatabase/businesspermit.php'; // Update with your API endpoint
+      final apiUrl = 'http://192.168.100.149/dartdb/business_permit_form.php';
 
       final formData = {
-        'businessName': _businessNameController.text,
-        'ownerName': _ownerNameController.text,
-        'houseNumber': _houseNumberController.text,
+        'business_name': _businessNameController.text,
+        'owner_name': _ownerNameController.text,
+        'house_number': _houseNumberController.text,
         'street': _streetController.text,
         'subdivision': _subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text,
-        'businessType': _businessTypeController.text,
+        'business_type': _businessTypeController.text,
+        'submit': '1',  // This field is needed to match PHP script's condition for submission
       };
 
       try {
         final response = await http.post(
           Uri.parse(apiUrl),
-          headers: {"Content-Type": "application/x-www-form-urlencoded"}, // Change to form URL encoded
-          body: formData, // Send form data directly
+          headers: {"Content-Type": "application/x-www-form-urlencoded"},
+          body: formData,
         );
 
         if (response.statusCode == 200) {
-          final responseData = response.body; // PHP will handle response; you might want to process if needed
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Form submitted successfully!')),
           );
@@ -160,7 +196,7 @@ class _BusinessFormState extends State<BusinessForm> {
                       padding: const EdgeInsets.symmetric(
                           vertical: 15, horizontal: 30),
                     ),
-                    onPressed: submitForm,
+                    onPressed: confirmSubmission,
                     child: const Text(
                       'Submit',
                       style: TextStyle(fontSize: 18, color: Colors.white),
