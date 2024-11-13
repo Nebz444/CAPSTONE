@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'request_page.dart'; // Import the request_page.dart file
 import 'package:baranguard/Login.dart';
 import 'dart:async';
+import 'package:baranguard/views/contact.dart';
 
 class BaranguardDashboard extends StatefulWidget {
   final String username; // Username to display or use
@@ -50,9 +51,10 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
         print('Reports icon tapped');
         break;
       case 'contacts':
-        print('Contacts icon tapped');
-        break;
-      default:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ContactPage()),
+        );
         break;
     }
   }
@@ -136,6 +138,10 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               title: Text('Contacts'),
               onTap: () {
                 Navigator.pop(context); // Close the drawer after selection
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ContactPage()), // Navigate to ComplaintsForm
+                );
               },
             ),
             Divider(), // Optional: to add a divider between options
