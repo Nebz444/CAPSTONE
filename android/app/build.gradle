@@ -6,17 +6,26 @@ plugins {
 }
 
 android {
+
+    compileSdkVersion 33
+    defaultConfig {
+        targetSdkVersion 33
+        minSdkVersion 21 // or whatever your app requires
+        versionCode 1
+        versionName "1.0"
+        }
+
     namespace = "com.example.baranguard"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget =  "17"
     }
 
     defaultConfig {

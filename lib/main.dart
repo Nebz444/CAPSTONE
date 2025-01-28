@@ -1,24 +1,31 @@
 import 'package:flutter/material.dart';
-import 'views/login_page.dart';
-import 'views/baranguard_dashboard.dart';
-
+import 'package:provider/provider.dart';
+import 'provider/user_provider.dart';
+import 'views/account_settings_page.dart'; // Import Account Settings Page
+import 'package:baranguard/Login.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => UserProvider()),
+          //If you want to add provider
+        ],
+        child: MyApp()
+      )
+  );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Login',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: LoginPage(), // Starts with the login page
+        title: 'Baranguard',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: BaranguardLoginPage(),
     );
   }
 }

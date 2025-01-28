@@ -1,82 +1,84 @@
-import 'package:baranguard/views/complaints.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'request_page.dart'; // Import the request_page.dart file
+import 'package:baranguard/views/account_settings_page.dart';
+import 'package:baranguard/views/complaints.dart';
+import 'package:baranguard/views/request_page.dart';
 import 'package:baranguard/Login.dart';
-import 'dart:async';
 import 'package:baranguard/views/contact.dart';
+import 'package:baranguard/views/report.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BaranguardDashboard extends StatefulWidget {
-  final String username; // Username to display or use
+  final String username;
 
-  BaranguardDashboard({required this.username}); // Constructor to receive username
+  BaranguardDashboard({required this.username});
 
   @override
   _BaranguardDashboardState createState() => _BaranguardDashboardState();
 }
 
 class _BaranguardDashboardState extends State<BaranguardDashboard> {
-  bool _showWelcomeText = true; // Control the visibility of the welcome text
+  int _currentIndex = 2; // Default index for the home tab
+  File? _profileImage;
+
+  final List<Widget> _pages = [
+    RequestPage(),
+    ComplaintsForm(),
+    Center(child: Text("Home")), // Placeholder for home
+    ReportPage(),
+    ContactPage(),
+  ];
 
   @override
   void initState() {
     super.initState();
-
-    // Set a timer to hide the welcome text after 3 seconds
-    Timer(Duration(seconds: 3), () {
-      setState(() {
-        _showWelcomeText = false; // Hide the welcome text after 3 seconds
-      });
-    });
+    _fetchUserProfile(); // Load the profile image
   }
 
-  // Function to handle icon taps
-  void _onIconTap(String iconName) {
-    switch (iconName) {
-      case 'home':
-        print('Home icon tapped');
-        break;
-      case 'mail':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => RequestPage()), // Navigate to RequestPage
-        );
-        break;
-      case 'profile':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ComplaintsForm()), // Navigate to ComplaintsForm
-        );
-        break;
-      case 'report':
-        print('Reports icon tapped');
-        break;
-      case 'contacts':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ContactPage()),
-        );
-        break;
+  // Load profile image from SharedPreferences
+  Future<void> _fetchUserProfile() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? imagePath = prefs.getString('profileImage');
+    if (imagePath != null && File(imagePath).existsSync()) {
+      setState(() {
+        _profileImage = File(imagePath);
+      });
     }
+  }
+
+  // Navigate to Account Settings Page
+  void _navigateToAccountSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AccountSettingsPage()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Baranguard'),
+        title: const Text('Baranguard'),
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Icon(Icons.menu),
+            icon: const Icon(Icons.menu),
             onPressed: () {
-              Scaffold.of(context).openDrawer(); // Open the drawer using the correct context
+              Scaffold.of(context).openDrawer();
             },
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              backgroundImage: AssetImage('assets/profile_picture.png'), // Replace with your image asset
+          GestureDetector(
+            onTap: _navigateToAccountSettings,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundImage: _profileImage != null
+                    ? FileImage(_profileImage!)
+                    : const AssetImage('assets/default_profile.png'),
+              ),
             ),
           ),
         ],
@@ -86,162 +88,111 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.red[200],
-              ),
+              decoration: BoxDecoration(color: Colors.red[200]),
               child: Text(
-                'Welcome, ${widget.username}', // Access username through widget
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+                'Welcome, ${widget.username}',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
             ListTile(
-              leading: Icon(Icons.home),
-              title: Text('Home'),
+              leading: const Icon(Icons.mail),
+              title: const Text('Request'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer after selection
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.mail),
-              title: Text('Request'),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
+                Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => RequestPage()), // Navigate to RequestPage
+                  MaterialPageRoute(builder: (context) => RequestPage()),
                 );
               },
             ),
             ListTile(
-              leading: Icon(Icons.newspaper),
-              title: Text('Complaints'),
+              leading: const Icon(Icons.person),
+              title: const Text('Complaints'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer after selection
+                Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ComplaintsForm()), // Navigate to ComplaintsForm
+                  MaterialPageRoute(builder: (context) => ComplaintsForm()),
                 );
               },
             ),
             ListTile(
-              leading: Icon(Icons.report_problem),
-              title: Text('Reports'),
+              leading: const Icon(Icons.report_problem),
+              title: const Text('Reports'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer after selection
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.contact_emergency),
-              title: Text('Contacts'),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer after selection
+                Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ContactPage()), // Navigate to ComplaintsForm
+                  MaterialPageRoute(builder: (context) => ReportPage()),
                 );
               },
             ),
-            Divider(), // Optional: to add a divider between options
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+            ListTile(
+              leading: const Icon(Icons.phone),
+              title: const Text('Contacts'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ContactPage()),
+                );
+              },
+            ),
+            const Divider(),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
               child: Text(
-                'More Options', // Add "More Option" text
+                'More Options',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             ListTile(
-              leading: Icon(Icons.logout),
-              title: Text('Logout'),
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
               onTap: () {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => BaranguardLoginPage()), // Navigate to BaranguardLoginPage
-                      (Route<dynamic> route) => false, // Clear navigation stack
+                  MaterialPageRoute(
+                      builder: (context) => BaranguardLoginPage()),
+                      (Route<dynamic> route) => false,
                 );
               },
             ),
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(20),
-            color: Colors.red[200],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                GestureDetector(
-                  onTap: () => _onIconTap('home'), // Handle Home icon tap
-                  child: Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.home, color: Colors.white, size: 25),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => _onIconTap('mail'), // Handle News icon tap
-                  child: Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.mail, color: Colors.white, size: 25),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => _onIconTap('profile'), // Handle Profile icon tap
-                  child: Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.person, color: Colors.white, size: 25),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => _onIconTap('report'), // Handle Report icon tap
-                  child: Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.report_problem, color: Colors.white, size: 25),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => _onIconTap('contacts'), // Handle Contacts icon tap
-                  child: Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.phone_android_rounded, color: Colors.white, size: 25),
-                  ),
-                ),
-              ],
-            ),
+      body: _pages[_currentIndex], // Display selected page
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index; // Update current index on tap
+          });
+        },
+        selectedItemColor: Colors.teal,
+        unselectedItemColor: Colors.black54,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.mail),
+            label: "Request",
           ),
-          Expanded(
-            child: Center(
-              child: Visibility(
-                visible: _showWelcomeText,
-                child: Text(
-                  'Welcome, ${widget.username}', // Display username on the dashboard
-                  style: TextStyle(fontSize: 24),
-                ),
-              ),
-            ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: "Complaints",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.report_problem),
+            label: "Report",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.phone),
+            label: "Contacts",
           ),
         ],
       ),
