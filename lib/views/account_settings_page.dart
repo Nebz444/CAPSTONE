@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // To persist the profile picture path
+import 'package:shared_preferences/shared_preferences.dart';
 import '../model/users_model.dart';
 import '../provider/user_provider.dart';
 
@@ -21,7 +23,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   void initState() {
     super.initState();
     fetchUserDetails();
-    _loadProfileImage(); // Load saved profile picture
   }
 
   Future<void> fetchUserDetails() async {
@@ -32,36 +33,61 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     } else {
       birthday = "No Birthday Provided";
     }
-  }
 
-  // Load the saved profile image from SharedPreferences
-  Future<void> _loadProfileImage() async {
+    // Load profile image from SharedPreferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? imagePath = prefs.getString('profileImage');
-    if (imagePath != null && mounted) {
+    String? savedProfileImage = prefs.getString('profileImage');
+
+    if (savedProfileImage != null && savedProfileImage.isNotEmpty) {
       setState(() {
-        _profileImage = File(imagePath);
+        user!.profileImage = savedProfileImage;
       });
     }
   }
 
-  // Save the profile image path to SharedPreferences
-  Future<void> _saveProfileImage(File image) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profileImage', image.path);
-  }
-
-  // Pick a new profile picture
+  // Pick a new profile picture and upload to the API
   Future<void> _pickProfileImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      setState(() {
-        _profileImage = File(pickedFile.path);
-      });
-      await _saveProfileImage(File(pickedFile.path));
+      File imageFile = File(pickedFile.path);
+      String? uploadedImageUrl = await _uploadProfileImage(imageFile);
+
+      if (uploadedImageUrl != null) {
+        setState(() {
+          _profileImage = imageFile;
+        });
+
+        // Update UserProvider with new profile image URL
+        Provider.of<UserProvider>(context, listen: false).updateProfileImage(uploadedImageUrl);
+      }
     }
+  }
+
+  // Upload profile image to API
+  Future<String?> _uploadProfileImage(File imageFile) async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('http://192.168.100.149/dartdb/dartdb.php'),
+    );
+
+    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+    request.fields['user_id'] = user!.id.toString();
+    request.fields['action'] = 'upload_profile_picture'; // Required by the API
+
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      var responseData = await response.stream.bytesToString();
+      var jsonResponse = json.decode(responseData);
+
+      if (jsonResponse['status'] == 'success') {
+        return jsonResponse['profile_image_path']; // Return the correct image path
+      }
+    }
+
+    return null;
   }
 
   @override
@@ -82,13 +108,15 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           // Profile Picture Section
           Center(
             child: GestureDetector(
-              onTap: _pickProfileImage, // Pick a new profile picture
+              onTap: _pickProfileImage,
               child: CircleAvatar(
                 radius: 60,
                 backgroundImage: _profileImage != null
                     ? FileImage(_profileImage!) as ImageProvider
-                    : const AssetImage('assets/default_profile.png'), // Use a default profile picture
-                child: _profileImage == null
+                    : user?.profileImage != null
+                    ? NetworkImage(user!.profileImage!)
+                    : const AssetImage('assets/default_profile.png'),
+                child: _profileImage == null && user?.profileImage == null
                     ? const Icon(
                   Icons.camera_alt,
                   size: 30,

@@ -7,6 +7,7 @@ class User {
   DateTime? birthday;
   String? mobileNumber;
   String? homeAddress;
+  String? profileImage; // ✅ Added profile image field
 
   User({
     this.id,
@@ -17,6 +18,7 @@ class User {
     this.birthday,
     this.mobileNumber,
     this.homeAddress,
+    this.profileImage, // ✅ Added profile image field
   });
 
   Map<String, dynamic> toJson() {
@@ -29,6 +31,7 @@ class User {
       'birthday': birthday?.toIso8601String(), // Serialize DateTime as ISO8601 string
       'mobile_number': mobileNumber,
       'home_address': homeAddress,
+      'profile_image_path': profileImage, // ✅ Added profile image field
     };
   }
 
@@ -44,6 +47,7 @@ class User {
           : null,
       mobileNumber: json['mobile_number'],
       homeAddress: json['home_address'],
+      profileImage: json['profile_image_path'], // ✅ Retrieve profile image from API response
     );
   }
 }

@@ -53,9 +53,7 @@ class _BaranguardLoginPageState extends State<BaranguardLoginPage> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-              builder: (context) => BaranguardDashboard(
-                username: currentUser.username,
-              ),
+              builder: (context) => BaranguardDashboard(),
             ),
                 (route) => false,
           );
