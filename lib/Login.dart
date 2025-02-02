@@ -3,6 +3,7 @@ import 'package:provider/provider.dart'; // For user provider management
 import 'package:baranguard/provider/user_provider.dart';
 import 'package:baranguard/views/baranguard_dashboard.dart'; // Import Dashboard screen
 import 'package:baranguard/signup.dart'; // Import SignUp screen
+import 'request_otp_screen.dart'; // Import the OTP Request screen
 import 'controller/login_controller.dart';
 import 'model/users_model.dart';
 
@@ -157,6 +158,28 @@ class _BaranguardLoginPageState extends State<BaranguardLoginPage> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.blue,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+
+                // Forgot Password Link
+                GestureDetector(
+                  onTap: () {
+                    // Navigate to the OTP Request screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RequestOTPScreen(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Forgot Password?',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 16,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
