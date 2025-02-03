@@ -200,48 +200,60 @@ class FacebookMediaFeed extends StatefulWidget {
 class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
   late final WebViewController _controller;
   bool isLoading = true;
+  bool hasError = false;
 
   @override
   void initState() {
     super.initState();
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.white)
+      ..setUserAgent(
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
       ..setNavigationDelegate(
         NavigationDelegate(
-          onNavigationRequest: (NavigationRequest request) async {
-            if (request.url.startsWith("intent://")) {
-              // Open Facebook links in an external browser
-              final Uri fbUrl = Uri.parse("https://www.facebook.com/MTOPORAC");
-              if (await canLaunchUrl(fbUrl)) {
-                await launchUrl(fbUrl, mode: LaunchMode.externalApplication);
-              }
-              return NavigationDecision.prevent;
-            }
-            return NavigationDecision.navigate;
-          },
           onPageFinished: (String url) {
             setState(() {
               isLoading = false;
             });
           },
           onWebResourceError: (WebResourceError error) {
-            print("WebView Error: ${error.description}");
+            setState(() {
+              hasError = true;
+            });
+            print('Error loading page: ${error.description}');
           },
         ),
       )
-      ..loadRequest(Uri.parse(
-          'https://www.facebook.com/plugins/page.php?href=https://www.facebook.com/MTOPORAC&tabs=timeline&width=500&height=800&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId'));
+      ..loadRequest(
+        Uri.parse(
+          'https://www.facebook.com/plugins/page.php?'
+              'href=https://www.facebook.com/MTOPORAC&tabs=timeline&width=800&height=1200&'
+              'small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId',
+        ),
+      );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
+      appBar: AppBar(
+        title: const Text('Facebook Feed'),
+      ),
+      body: hasError
+          ? Center(
+        child: Text(
+          'Failed to load content. Please check your internet connection or the URL.',
+          style: TextStyle(color: Colors.red),
+          textAlign: TextAlign.center,
+        ),
+      )
+          : Stack(
         children: [
           WebViewWidget(controller: _controller),
           if (isLoading)
-            Center(
+            const Center(
               child: CircularProgressIndicator(),
             ),
         ],

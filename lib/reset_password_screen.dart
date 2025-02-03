@@ -38,7 +38,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       final response = await http.post(
         Uri.parse(resetPasswordUrl),
         body: {
-          'email': widget.email,
+          'email_address': widget.email,
           'otp': otp,
           'newPassword': newPassword,
         },

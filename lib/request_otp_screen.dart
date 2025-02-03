@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'reset_password_screen.dart';
-import 'package:baranguard/Login.dart';
 
 class RequestOTPScreen extends StatefulWidget {
   @override
@@ -10,6 +9,7 @@ class RequestOTPScreen extends StatefulWidget {
 }
 
 class _RequestOTPScreenState extends State<RequestOTPScreen> {
+
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
 
@@ -29,18 +29,24 @@ class _RequestOTPScreenState extends State<RequestOTPScreen> {
     });
 
     try {
-      // POST request to your backend
       final response = await http.post(
         Uri.parse(sendOtpUrl),
-        body: {'email': email},
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: {'email_address': email},  // Change from JSON to form-encoded
       );
 
+      print('Raw Response: "${response.body}"'); // Debugging
+
+      if (response.body.isEmpty) {
+        throw Exception('Server returned an empty response');
+      }
+
       final data = json.decode(response.body);
+
       if (data['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('OTP sent to your email')),
         );
-        // Navigate to the reset password screen
         Navigator.push(
           context,
           MaterialPageRoute(
