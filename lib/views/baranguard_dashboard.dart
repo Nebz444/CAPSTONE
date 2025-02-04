@@ -200,17 +200,13 @@ class FacebookMediaFeed extends StatefulWidget {
 class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
   late final WebViewController _controller;
   bool isLoading = true;
-  bool hasError = false;
 
   @override
   void initState() {
     super.initState();
-
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.white)
-      ..setUserAgent(
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (String url) {
@@ -218,44 +214,66 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
               isLoading = false;
             });
           },
-          onWebResourceError: (WebResourceError error) {
-            setState(() {
-              hasError = true;
-            });
-            print('Error loading page: ${error.description}');
-          },
         ),
       )
-      ..loadRequest(
-        Uri.parse(
-          'https://www.facebook.com/plugins/page.php?'
-              'href=https://www.facebook.com/MTOPORAC&tabs=timeline&width=800&height=1200&'
-              'small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId',
-        ),
-      );
+      ..loadHtmlString(_generateFacebookEmbed());
+  }
+
+  /// Generates a responsive Facebook embed
+  String _generateFacebookEmbed() {
+    return '''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta charset="UTF-8">
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          background: #f8f9fa;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          overflow: hidden;
+        }
+        .fb-container {
+          width: 100vw;
+          max-width: 380px; /* Smaller width for mobile */
+          height: 95vh; /* Reduce height to avoid overflow */
+          overflow: hidden; /* Prevents side-scrolling */
+          position: relative;
+          border-radius: 10px;
+        }
+        iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
+          transform: scale(0.95);
+          transform-origin: top left;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="fb-container">
+        <iframe 
+          src="https://www.facebook.com/plugins/page.php?href=https://www.facebook.com/MTOPORAC&tabs=timeline&width=300&height=800&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
+          scrolling="no">
+        </iframe>
+      </div>
+    </body>
+    </html>
+    ''';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Facebook Feed'),
-      ),
-      body: hasError
-          ? Center(
-        child: Text(
-          'Failed to load content. Please check your internet connection or the URL.',
-          style: TextStyle(color: Colors.red),
-          textAlign: TextAlign.center,
-        ),
-      )
-          : Stack(
+      body: Stack(
         children: [
-          WebViewWidget(controller: _controller),
+          WebViewWidget(controller: _controller), // The WebView
           if (isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
-            ),
+            const Center(child: CircularProgressIndicator()), // Loading indicator
         ],
       ),
     );
