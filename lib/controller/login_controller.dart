@@ -6,7 +6,7 @@ import '../model/users_model.dart';
 
 class LoginController {
   final Client _client = http.Client();
-  final String apiUrl = "http://192.168.100.149/dartdb/dartdb.php";
+  final String apiUrl = "https://baranguard.shop/API/dartdb.php";
 
   Future<bool> login(User user) async {
     try {

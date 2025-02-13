@@ -112,7 +112,7 @@ class _BarangayIDState extends State<BarangayID> {
         _isLoading = true;
       });
 
-      final apiUrl = 'http://192.168.100.149/dartdb/barangay_id.php';
+      final apiUrl = 'https://baranguard.shop/API/barangay_id.php';
 
       final formData = {
         'full_name': _fullNameController.text,

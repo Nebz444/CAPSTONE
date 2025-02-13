@@ -74,7 +74,7 @@ class _BusinessFormState extends State<BusinessForm> {
   // Form submission function
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final apiUrl = 'http://192.168.100.149/dartdb/business_permit_form.php';
+      final apiUrl = 'https://baranguard.shop/API/business_permit_form.php';
 
       final formData = {
         'business_name': _businessNameController.text,

@@ -41,15 +41,20 @@ class _BaranguardLoginPageState extends State<BaranguardLoginPage> {
       // Attempt login
       bool success = await _loginController.login(user);
 
+      if (success = true) {
+        debugPrint('Received Request');
+      }
+
       if (success) {
         // Fetch current user data
         User? currentUser = await _loginController.getUser(username);
+        debugPrint("Abot dito");
 
         if (currentUser != null) {
           // Save user data to the provider
           Provider.of<UserProvider>(context, listen: false)
               .setUser(currentUser);
-
+          debugPrint("success");
           // Navigate to the dashboard
           Navigator.pushAndRemoveUntil(
             context,

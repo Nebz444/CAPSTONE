@@ -90,7 +90,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
   // Submission logic (updated)
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final apiUrl = 'http://192.168.100.149/dartdb/indigency_form.php';
+      final apiUrl = 'https://baranguard.shop/API/indigency_form.php';
 
       // Determine purpose and set otherInput if necessary
       String purpose = _selectedPurpose == 'Other' ? _otherPurposeController.text : _selectedPurpose!;

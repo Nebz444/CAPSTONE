@@ -16,7 +16,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _isLoading = false;
 
   // Replace with your actual endpoint
-  final String resetPasswordUrl = 'http://192.168.100.149/dartdb/resetpassword.php';
+  final String resetPasswordUrl = 'https://baranguard.shop/API/resetpassword.php';
 
   Future<void> _resetPassword() async {
     final String otp = _otpController.text.trim();

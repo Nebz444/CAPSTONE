@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ComplaintsForm extends StatefulWidget {
   @override
@@ -17,39 +18,42 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
   String? _selectedComplaintType;
 
   Future<void> submitComplaint() async {
-    final apiUrl = 'http://192.168.100.149/dartdb/complaintsdb.php';
+    final apiUrl = 'https://baranguard.shop/API/complaintsdb.php';
 
-    // Prepare data to send with POST request
-    final complaintData = {
-      'submit': '1', // Simulate form submission by including a 'submit' key
-      'full_name': _nameController.text,
-      'house_number': _houseNumberController.text,
-      'street': _streetController.text,
-      'subdivision': _subdivisionController.text,
+    // Prepare JSON data
+    final complaintData = jsonEncode({
+      'full_name': _nameController.text.trim(),
+      'house_number': _houseNumberController.text.trim(),
+      'street': _streetController.text.trim(),
+      'subdivision': _subdivisionController.text.trim(),
       'complaint_type': _selectedComplaintType,
-      'contact_number': _contactNumberController.text,
-      'statement': _narrativeController.text,
-    };
+      'contact_number': _contactNumberController.text.trim(),
+      'statement': _narrativeController.text.trim(),
+    });
 
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        headers: {"Content-Type": "application/json"}, // ✅ Corrected Content-Type
         body: complaintData,
       );
 
-      if (response.statusCode == 200) {
+      print("API Response: ${response.body}"); // ✅ Debugging
+
+      final responseBody = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseBody['status'] == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Complaint submitted successfully")),
+          SnackBar(content: Text("Complaint submitted successfully!")),
         );
         _clearForm();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to submit complaint")),
+          SnackBar(content: Text(responseBody['message'] ?? "Failed to submit complaint.")),
         );
       }
     } catch (e) {
-      print('Error: $e');
+      print("Error: $e"); // ✅ Debugging
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("An error occurred. Please try again.")),
       );

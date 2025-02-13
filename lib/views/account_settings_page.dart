@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/users_model.dart';
 import '../provider/user_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AccountSettingsPage extends StatefulWidget {
   @override
@@ -22,7 +23,13 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   @override
   void initState() {
     super.initState();
+    requestPermissions(); // Ensure permissions are granted
     fetchUserDetails();
+  }
+
+  Future<void> requestPermissions() async {
+    await Permission.photos.request();
+    await Permission.camera.request();
   }
 
   Future<void> fetchUserDetails() async {
@@ -34,7 +41,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
       birthday = "No Birthday Provided";
     }
 
-    // Load profile image from SharedPreferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedProfileImage = prefs.getString('profileImage');
 
@@ -59,7 +65,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           _profileImage = imageFile;
         });
 
-        // Update UserProvider with new profile image URL
         Provider.of<UserProvider>(context, listen: false).updateProfileImage(uploadedImageUrl);
       }
     }
@@ -67,28 +72,34 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
   // Upload profile image to API
   Future<String?> _uploadProfileImage(File imageFile) async {
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('http://192.168.100.149/dartdb/dartdb.php'),
-    );
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://baranguard.shop/API/dartdb.php'), // Correct API URL
+      );
 
-    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
-    request.fields['user_id'] = user!.id.toString();
-    request.fields['action'] = 'upload_profile_picture'; // Required by the API
+      request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+      request.fields['user_id'] = user!.id.toString();
+      request.fields['action'] = 'upload_profile_picture'; // Correct action name
 
-    var response = await request.send();
-
-    if (response.statusCode == 200) {
+      var response = await request.send();
       var responseData = await response.stream.bytesToString();
+
+      print("Upload Response: $responseData"); // Debugging
+
       var jsonResponse = json.decode(responseData);
-
       if (jsonResponse['status'] == 'success') {
-        return jsonResponse['profile_image_path']; // Return the correct image path
+        print("Uploaded Image URL: ${jsonResponse['profile_image_path']}"); // Log success
+        return jsonResponse['profile_image_path'];
+      } else {
+        print("Error: ${jsonResponse['message']}"); // Log error message
       }
+    } catch (e) {
+      print("Exception: $e"); // Log any exceptions
     }
-
     return null;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +116,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           : ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // Profile Picture Section
           Center(
             child: GestureDetector(
               onTap: _pickProfileImage,
@@ -133,21 +143,11 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           _buildInfoRow("Mobile Number", user?.mobileNumber),
           _buildInfoRow("Email Address", user?.email),
           _buildInfoRow("Home Address", user?.homeAddress),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Edit feature coming soon!')),
-              );
-            },
-            child: const Text('Edit Account Details'),
-          ),
         ],
       ),
     );
   }
 
-  // Function to build info rows dynamically
   Widget _buildInfoRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -156,17 +156,11 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         children: [
           Expanded(
             flex: 2,
-            child: Text(
-              "$label:",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+            child: Text("$label:", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
           Expanded(
             flex: 3,
-            child: Text(
-              value ?? 'N/A',
-              style: const TextStyle(fontSize: 16),
-            ),
+            child: Text(value ?? 'N/A', style: const TextStyle(fontSize: 16)),
           ),
         ],
       ),

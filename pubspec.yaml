@@ -44,6 +44,8 @@ dependencies:
   url_launcher: ^6.1.11
   webfeed: ^0.7.0
   mailer: ^6.0.0
+  dio: ^5.3.2
+  permission_handler: ^11.0.1
   intl:
 
   # The following adds the Cupertino Icons font to your application.

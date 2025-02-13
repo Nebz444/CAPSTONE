@@ -111,7 +111,7 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
 
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final apiUrl = 'http://192.168.100.149/dartdb/barangay_certificate.php';
+      final apiUrl = 'https://baranguard.shop/API/barangay_certificate.php';
 
       // Prepare form data with conditional inclusion of otherInput
       final formData = {

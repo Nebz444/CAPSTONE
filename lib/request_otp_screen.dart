@@ -14,7 +14,7 @@ class _RequestOTPScreenState extends State<RequestOTPScreen> {
   bool _isLoading = false;
 
   // Replace with your actual endpoint
-  final String sendOtpUrl = 'http://192.168.100.149/dartdb/sendotp.php';
+  final String sendOtpUrl = 'https://baranguard.shop/API/sendotp.php';
 
   Future<void> _requestOTP() async {
     final String email = _emailController.text.trim();

@@ -12,8 +12,8 @@ class ReportPage extends StatefulWidget {
 }
 
 class _ReportPageState extends State<ReportPage> {
-  LatLng? _currentLocation; // Current location
-  XFile? _imageFile; // Image file picked
+  LatLng? _currentLocation;
+  XFile? _imageFile;
   final TextEditingController _noteController = TextEditingController();
   final LatLng _targetLocation = LatLng(15.113359178687087, 120.56616699467249);
 
@@ -27,7 +27,6 @@ class _ReportPageState extends State<ReportPage> {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,7 +35,6 @@ class _ReportPageState extends State<ReportPage> {
       return;
     }
 
-    // Request location permissions if needed
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -55,7 +53,6 @@ class _ReportPageState extends State<ReportPage> {
       return;
     }
 
-    // Fetch the current position
     Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
@@ -95,7 +92,6 @@ class _ReportPageState extends State<ReportPage> {
       return;
     }
 
-    // Show confirmation dialog
     bool? confirm = await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -118,13 +114,16 @@ class _ReportPageState extends State<ReportPage> {
 
     if (confirm == true) {
       try {
-        final request = http.MultipartRequest('POST', Uri.parse('http://192.168.100.149/dartdb/report.php'));
+        final request = http.MultipartRequest('POST', Uri.parse('https://baranguard.shop/API/report.php'));
         request.fields['latitude'] = latitude.toString();
         request.fields['longitude'] = longitude.toString();
         request.fields['note'] = note;
         request.files.add(await http.MultipartFile.fromPath('photo', imagePath));
 
         final response = await request.send();
+        final responseString = await response.stream.bytesToString();
+        print("Server Response: $responseString");
+
         if (response.statusCode == 200) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Report submitted successfully!')),
@@ -159,79 +158,87 @@ class _ReportPageState extends State<ReportPage> {
           ],
         ),
       )
-          : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: FlutterMap(
-                options: MapOptions(
-                  center: _currentLocation, // Use the current location as the map center
-                  zoom: 15.0,
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    subdomains: ['a', 'b', 'c'],
-                    userAgentPackageName: 'com.example.yourapp',
+          : SingleChildScrollView( // ✅ Prevent Overflow
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AspectRatio(
+                aspectRatio: 16 / 9, // ✅ Map scales properly
+                child: FlutterMap(
+                  options: MapOptions(
+                    center: _currentLocation,
+                    zoom: 15.0,
                   ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: _currentLocation!,
-                        width: 80.0,
-                        height: 80.0,
-                        builder: (ctx) => Icon(
-                          Icons.my_location,
-                          color: Colors.green,
-                          size: 40.0,
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      subdomains: ['a', 'b', 'c'],
+                      userAgentPackageName: 'com.example.yourapp',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: _currentLocation!,
+                          width: 80.0,
+                          height: 80.0,
+                          builder: (ctx) => Icon(
+                            Icons.my_location,
+                            color: Colors.green,
+                            size: 40.0,
+                          ),
                         ),
-                      ),
-                      Marker(
-                        point: _targetLocation,
-                        width: 80.0,
-                        height: 80.0,
-                        builder: (ctx) => Icon(
-                          Icons.location_on,
-                          color: Colors.red,
-                          size: 40.0,
+                        Marker(
+                          point: _targetLocation,
+                          width: 80.0,
+                          height: 80.0,
+                          builder: (ctx) => Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 40.0,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: _noteController,
-              decoration: InputDecoration(
-                labelText: 'Enter a note',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-            SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _pickImage,
-              icon: Icon(Icons.camera),
-              label: Text('Capture Evidence'),
-            ),
-            if (_imageFile != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: Image.file(
-                  File(_imageFile!.path),
-                  height: 200,
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _confirmAndSubmitReport,
-              child: Text('Submit Report'),
-            ),
-          ],
+              SizedBox(height: 16),
+              TextField(
+                controller: _noteController,
+                decoration: InputDecoration(
+                  labelText: 'Enter a note',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _pickImage,
+                icon: Icon(Icons.camera),
+                label: Text('Capture Evidence'),
+              ),
+              if (_imageFile != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: ClipRRect( // ✅ Prevents overflow
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(_imageFile!.path),
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      height: MediaQuery.of(context).size.height * 0.3, // ✅ Responsive height
+                    ),
+                  ),
+                ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _confirmAndSubmitReport,
+                child: Text('Submit Report'),
+              ),
+            ],
+          ),
         ),
       ),
     );

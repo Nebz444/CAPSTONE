@@ -11,7 +11,6 @@ import 'package:baranguard/views/request_page.dart';
 import 'package:baranguard/Login.dart';
 import 'package:baranguard/views/contact.dart';
 import 'package:baranguard/views/report.dart';
-
 import '../model/users_model.dart';
 
 class BaranguardDashboard extends StatefulWidget {
@@ -240,7 +239,7 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
         .fb-container {
           width: 100vw;
           max-width: 380px; /* Smaller width for mobile */
-          height: 95vh; /* Reduce height to avoid overflow */
+          height: 100vh; /* Reduce height to avoid overflow */
           overflow: hidden; /* Prevents side-scrolling */
           position: relative;
           border-radius: 10px;
@@ -257,7 +256,7 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
     <body>
       <div class="fb-container">
         <iframe 
-          src="https://www.facebook.com/plugins/page.php?href=https://www.facebook.com/MTOPORAC&tabs=timeline&width=300&height=800&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
+          src="https://www.facebook.com/plugins/page.php?href=https://www.facebook.com/PhilippineSTAR&tabs=timeline&width=300&height=800&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
           scrolling="no">
         </iframe>
       </div>

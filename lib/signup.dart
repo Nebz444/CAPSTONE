@@ -15,19 +15,18 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _mobileNumberController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _homeAddressController = TextEditingController();
-  DateTime? _selectedBirthday; // Store the selected birthday date
+  DateTime? _selectedBirthday;
 
   void _signUp() async {
-    String fullName = _fullNameController.text;
+    String fullName = _fullNameController.text.trim();
     String birthday = _selectedBirthday != null ? _selectedBirthday!.toIso8601String() : '';
-    String username = _usernameController.text;
-    String password = _passwordController.text;
-    String confirmPassword = _confirmPasswordController.text;
-    String mobileNumber = _mobileNumberController.text;
-    String email = _emailController.text;
-    String homeAddress = _homeAddressController.text;
+    String username = _usernameController.text.trim();
+    String password = _passwordController.text.trim();
+    String confirmPassword = _confirmPasswordController.text.trim();
+    String mobileNumber = _mobileNumberController.text.trim();
+    String email = _emailController.text.trim();
+    String homeAddress = _homeAddressController.text.trim();
 
-    // Validate passwords match
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Passwords do not match")),
@@ -35,8 +34,15 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    // Send signup request
-    var url = Uri.parse('http://192.168.100.149/dartdb/signup.php');
+    // Check for empty fields
+    if (fullName.isEmpty || username.isEmpty || password.isEmpty || mobileNumber.isEmpty || email.isEmpty || homeAddress.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("All fields are required.")),
+      );
+      return;
+    }
+
+    var url = Uri.parse('https://baranguard.shop/API/signup.php');
     var response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -51,29 +57,28 @@ class _SignUpPageState extends State<SignUpPage> {
       }),
     );
 
-    // Handle response
     if (response.statusCode == 200) {
       var responseBody = jsonDecode(response.body);
+      print("Response: $responseBody"); // Debugging
+
       if (responseBody['status'] == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Sign up successful!")),
         );
-        Navigator.pop(context);  // Return to login page on success
-      } else if (responseBody['status'] == 'error' && responseBody['message'] == 'Username already taken') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Username already taken")),
-        );
+        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(responseBody['message'])),
         );
       }
     } else {
+      print("Error: ${response.statusCode} - ${response.body}");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: ${response.statusCode}")),
       );
     }
   }
+
 
   // Function to show a date picker and set the selected date
   Future<void> _selectBirthday(BuildContext context) async {
