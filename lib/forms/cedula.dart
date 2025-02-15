@@ -114,8 +114,6 @@ class _CedulaFormState extends State<CedulaForm> {
       await submitForm();
     }
   }
-  //
-
 
 // Modify the submitForm function
   Future<void> submitForm() async {
@@ -136,24 +134,24 @@ class _CedulaFormState extends State<CedulaForm> {
         'weight': _weightController.text,
         'contact_number': _contactNumberController.text,
         'emergency_number': _emergencyNumberController.text,
-        'submit': '1',
       };
 
-       try {
+      try {
         final response = await http.post(
           Uri.parse(apiUrl),
-          headers: {"Content-Type": "application/x-www-form-urlencoded"}, // Change to form URL encoded
-          body: formData, // Send form data directly
+          headers: {"Content-Type": "application/x-www-form-urlencoded"},
+          body: formData,
         );
 
-        if (response.statusCode == 200) {
-          final responseData = response.body; // PHP will handle response; you might want to process if needed
+        final responseData = jsonDecode(response.body);
+
+        if (response.statusCode == 200 && responseData["status"] == "success") {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Form submitted successfully!')),
+            SnackBar(content: Text(responseData["message"])),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to submit form. Please try again.')),
+            SnackBar(content: Text("Error: ${responseData["message"]}")),
           );
         }
       } catch (e) {
@@ -163,6 +161,7 @@ class _CedulaFormState extends State<CedulaForm> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
