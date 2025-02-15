@@ -213,18 +213,24 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
               isLoading = false;
             });
           },
+          onNavigationRequest: (NavigationRequest request) {
+            // Ensures Facebook content stays inside WebView
+            if (request.url.contains("facebook.com")) {
+              return NavigationDecision.navigate;
+            }
+            return NavigationDecision.navigate;
+          },
         ),
       )
       ..loadHtmlString(_generateFacebookEmbed());
   }
 
-  /// Generates a responsive Facebook embed
   String _generateFacebookEmbed() {
     return '''
     <!DOCTYPE html>
     <html lang="en">
     <head>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
       <meta charset="UTF-8">
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -238,28 +244,47 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
         }
         .fb-container {
           width: 100vw;
-          max-width: 380px; /* Smaller width for mobile */
-          height: 100vh; /* Reduce height to avoid overflow */
-          overflow: hidden; /* Prevents side-scrolling */
+          max-width: 100%;
+          height: 100vh;
+          overflow: hidden;
           position: relative;
-          border-radius: 10px;
         }
         iframe {
           width: 100%;
           height: 100%;
           border: none;
-          transform: scale(0.95);
-          transform-origin: top left;
         }
       </style>
     </head>
     <body>
       <div class="fb-container">
         <iframe 
-          src="https://www.facebook.com/plugins/page.php?href=https://www.facebook.com/PhilippineSTAR&tabs=timeline&width=300&height=800&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
+          id="fb-frame"
+          src="https://www.facebook.com/plugins/page.php?href=https://www.facebook.com/PhilippineSTAR&tabs=timeline&width=500&height=800&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
           scrolling="no">
         </iframe>
       </div>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          let iframe = document.getElementById("fb-frame");
+
+          // Ensure clicking inside Facebook stays inside WebView
+          iframe.addEventListener("load", function () {
+            iframe.contentWindow.document.addEventListener("click", function (event) {
+              let element = event.target;
+              while (element) {
+                if (element.tagName === "A") {
+                  event.preventDefault();
+                  iframe.src = element.href; // Open links inside iframe
+                  break;
+                }
+                element = element.parentElement;
+              }
+            });
+          });
+        });
+      </script>
     </body>
     </html>
     ''';
@@ -270,9 +295,8 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
     return Scaffold(
       body: Stack(
         children: [
-          WebViewWidget(controller: _controller), // The WebView
-          if (isLoading)
-            const Center(child: CircularProgressIndicator()), // Loading indicator
+          WebViewWidget(controller: _controller),
+          if (isLoading) const Center(child: CircularProgressIndicator()),
         ],
       ),
     );
