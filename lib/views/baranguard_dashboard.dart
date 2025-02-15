@@ -203,9 +203,14 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
   @override
   void initState() {
     super.initState();
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Colors.white)
+    // Optional: Force a desktop-like user agent to reduce deep-linking
+      ..setUserAgent(
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (String url) {
@@ -214,10 +219,15 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
             });
           },
           onNavigationRequest: (NavigationRequest request) {
-            // Ensures Facebook content stays inside WebView
-            if (request.url.contains("facebook.com")) {
-              return NavigationDecision.navigate;
+            // Check if the request is trying to open the FB app
+            if (request.url.startsWith('fb://') ||
+                request.url.startsWith('intent://') ||
+                request.url.contains('link.facebook.com/?')) {
+              // Prevent opening the native Facebook app
+              return NavigationDecision.prevent;
             }
+
+            // If it's a typical Facebook link, let it load in the WebView
             return NavigationDecision.navigate;
           },
         ),
@@ -258,33 +268,12 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
     </head>
     <body>
       <div class="fb-container">
-        <iframe 
+        <iframe
           id="fb-frame"
           src="https://www.facebook.com/plugins/page.php?href=https://www.facebook.com/PhilippineSTAR&tabs=timeline&width=500&height=800&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
           scrolling="no">
         </iframe>
       </div>
-
-      <script>
-        document.addEventListener("DOMContentLoaded", function () {
-          let iframe = document.getElementById("fb-frame");
-
-          // Ensure clicking inside Facebook stays inside WebView
-          iframe.addEventListener("load", function () {
-            iframe.contentWindow.document.addEventListener("click", function (event) {
-              let element = event.target;
-              while (element) {
-                if (element.tagName === "A") {
-                  event.preventDefault();
-                  iframe.src = element.href; // Open links inside iframe
-                  break;
-                }
-                element = element.parentElement;
-              }
-            });
-          });
-        });
-      </script>
     </body>
     </html>
     ''';
@@ -296,7 +285,8 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
       body: Stack(
         children: [
           WebViewWidget(controller: _controller),
-          if (isLoading) const Center(child: CircularProgressIndicator()),
+          if (isLoading)
+            const Center(child: CircularProgressIndicator()),
         ],
       ),
     );
