@@ -206,11 +206,9 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-    // Optional: Force a desktop-like user agent to reduce deep-linking
       ..setUserAgent(
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-              "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-      )
+              "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (String url) {
@@ -218,16 +216,17 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
               isLoading = false;
             });
           },
-          onNavigationRequest: (NavigationRequest request) {
-            // Check if the request is trying to open the FB app
-            if (request.url.startsWith('fb://') ||
-                request.url.startsWith('intent://') ||
-                request.url.contains('link.facebook.com/?')) {
-              // Prevent opening the native Facebook app
-              return NavigationDecision.prevent;
+          onNavigationRequest: (NavigationRequest request) async {
+            // If it's a Facebook link, try opening in the Facebook app
+            if (request.url.contains("facebook.com")) {
+              Uri fbAppUri = Uri.parse("fb://facewebmodal/f?href=${request.url}");
+              if (await canLaunchUrl(fbAppUri)) {
+                await launchUrl(fbAppUri); // Open in Facebook app
+              } else {
+                await launchUrl(Uri.parse(request.url)); // Open in browser
+              }
+              return NavigationDecision.prevent; // Stop WebView from loading
             }
-
-            // If it's a typical Facebook link, let it load in the WebView
             return NavigationDecision.navigate;
           },
         ),
@@ -285,8 +284,7 @@ class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
       body: Stack(
         children: [
           WebViewWidget(controller: _controller),
-          if (isLoading)
-            const Center(child: CircularProgressIndicator()),
+          if (isLoading) const Center(child: CircularProgressIndicator()),
         ],
       ),
     );
