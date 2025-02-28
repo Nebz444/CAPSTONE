@@ -1,49 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactPage extends StatelessWidget {
+  const ContactPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF9AA6B2),
       appBar: AppBar(
-        title: Text('Emergency Contacts'),
-        backgroundColor: Colors.red[200],
+        backgroundColor: Colors.blue[900],
+        elevation: 0,
+        title: const Text(
+          'Emergency Hotlines',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(10.0),
         child: ListView(
-          children: [
-            ContactCard(
-              provider: 'PELCO 2',
-              contactNumbers: ['(045) 900-0423', '0919 059 0423'],
-            ),
-            ContactCard(
-              provider: 'Porac',
-              contactNumbers: ['+ (045) 649 - 6027'],
-            ),
-            ContactCard(
-              provider: 'MDRRMO',
-              contactNumbers: ['0929-441-6188', '0953-694-2079'],
-            ),
-            ContactCard(
-              provider: 'BFP',
-              contactNumbers: ['0909-918-7205', '0967-283-6777'],
-            ),
-            ContactCard(
-              provider: 'PNP',
-              contactNumbers: ['0998 598 5464', '0977 301 4154'],
-            ),
-            ContactCard(
-              provider: 'PLDT',
-              contactNumbers: ['0999-516-0000'],
-            ),
-            ContactCard(
-              provider: 'Converge',
-              contactNumbers: ['0953-344-6398'],
-            ),
-            ContactCard(
-              provider: 'Water District',
-              contactNumbers: ['(045) 329-3182', '436-1825'],
-            ),
+          children: const [
+            ContactItem(provider: 'PELCO 2', contact: '(045) 900-0423'),
+            ContactItem(provider: 'Porac', contact: '+ (045) 649 - 6027'),
+            ContactItem(provider: 'MDRRMO', contact: '0929-441-6188'),
+            ContactItem(provider: 'BFP', contact: '0909-918-7205'),
+            ContactItem(provider: 'PNP', contact: '0998 598 5464'),
+            ContactItem(provider: 'PLDT', contact: '0999-516-0000'),
+            ContactItem(provider: 'Converge', contact: '0953-344-6398'),
+            ContactItem(provider: 'Water District', contact: '(045) 329-3182'),
           ],
         ),
       ),
@@ -51,39 +36,77 @@ class ContactPage extends StatelessWidget {
   }
 }
 
-class ContactCard extends StatelessWidget {
+class ContactItem extends StatelessWidget {
   final String provider;
-  final List<String> contactNumbers;
+  final String contact;
 
-  ContactCard({required this.provider, required this.contactNumbers});
+  const ContactItem({super.key, required this.provider, required this.contact});
+
+  Future<void> _makeCall(BuildContext context, String number) async {
+    final Uri url = Uri.parse('tel:$number');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Call Confirmation'),
+        content: Text('Do you want to call $number?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url);
+              }
+            },
+            child: const Text('Call'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 8.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      elevation: 4,
+      color: Colors.blue[700],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(10.0),
+        child: Row(
           children: [
-            Text(
-              provider,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.red[700],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    provider,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  const SizedBox(height: 5),
+                  GestureDetector(
+                    onTap: () => _makeCall(context, contact),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        contact,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 8),
-            for (var number in contactNumbers)
-              Text(
-                'Contact: $number',
-                style: TextStyle(fontSize: 16),
-              ),
           ],
         ),
       ),

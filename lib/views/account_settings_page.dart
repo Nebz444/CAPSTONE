@@ -51,7 +51,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     }
   }
 
-  // Pick a new profile picture and upload to the API
   Future<void> _pickProfileImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -65,12 +64,16 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           _profileImage = imageFile;
         });
 
+        // Update the UserProvider with the new profile image
         Provider.of<UserProvider>(context, listen: false).updateProfileImage(uploadedImageUrl);
+
+        // Save the new profile image URL to SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('profileImage', uploadedImageUrl);
       }
     }
   }
 
-  // Upload profile image to API
   Future<String?> _uploadProfileImage(File imageFile) async {
     try {
       var request = http.MultipartRequest(
@@ -99,7 +102,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     }
     return null;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +139,10 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             ),
           ),
           const SizedBox(height: 20),
-          _buildInfoRow("Full Name", user?.fullName),
+          _buildInfoRow("Last Name", user?.lastName),
+          _buildInfoRow("First Name", user?.firstName),
+          _buildInfoRow("Middle Name", user?.middleName),
+          _buildInfoRow("Suffix", user?.suffix),
           _buildInfoRow("Birthday", birthday),
           _buildInfoRow("Username", user?.username),
           _buildInfoRow("Mobile Number", user?.mobileNumber),

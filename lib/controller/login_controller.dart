@@ -2,78 +2,113 @@ import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../model/users_model.dart';
 
 class LoginController {
   final Client _client = http.Client();
   final String apiUrl = "https://baranguard.shop/API/dartdb.php";
 
+  // Save user session
+  Future<void> _saveUserSession(String userId, String username) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_id', userId);
+    await prefs.setString('username', username);
+  }
+
+  // Clear user session (for logout)
+  Future<void> _clearUserSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_id');
+    await prefs.remove('username');
+  }
+
+  // Check if user is already logged in
+  Future<bool> isUserLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_id') != null;
+  }
+
+  // Get saved user ID
+  Future<String?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_id');
+  }
+
+  // Get saved username
+  Future<String?> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('username');
+  }
+
   Future<bool> login(User user) async {
     try {
-      final response = await http.post(
+      final Map<String, dynamic> requestBody = {
+        "username": user.username,
+        "password": user.password,
+        "action": "login"
+      };
+
+      debugPrint("Sending login request: ${jsonEncode(requestBody)}");
+
+      final response = await _client.post(
         Uri.parse(apiUrl),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "username": user.username,
-          "password": user.password,
-        }),
+        body: jsonEncode(requestBody),
       );
 
-      debugPrint("${response.statusCode}");
+      debugPrint("Login Response Code: ${response.statusCode}");
+      debugPrint("Login Response Body: ${response.body}");
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['status'] == 'success') {
+        final Map<String, dynamic>? data = jsonDecode(response.body);
+        if (data != null && data['status'] == 'success') {
+          // Save user session
+          await _saveUserSession(data['user']['user_id'], data['user']['username']);
           return true;
         }
-        return false;
       }
       return false;
-    } catch (e) {
-      print("Error: $e");
+    } catch (e, stacktrace) {
+      debugPrint("Login Error: $e");
+      debugPrint("Stacktrace: $stacktrace");
       return false;
     }
   }
 
   Future<User?> getUser(String username) async {
     try {
-      final url = Uri.parse("$apiUrl?username=$username");
+      final Uri url = Uri.parse("$apiUrl?username=${Uri.encodeComponent(username)}&action=getUser");
+
       debugPrint("Request URL: $url");
 
       final response = await _client.get(
         url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        headers: {"Content-Type": "application/json; charset=UTF-8"},
       );
 
       debugPrint("Raw Response: ${response.body}");
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.statusCode == 200) {
         try {
-          final jsonResponse = jsonDecode(response.body);
+          final Map<String, dynamic>? jsonResponse = jsonDecode(response.body);
 
-          // Validate the structure of the response
-          if (jsonResponse is Map<String, dynamic> &&
-              jsonResponse.containsKey('user_id')) {
+          if (jsonResponse != null && jsonResponse.containsKey('user_id')) {
             return User.fromJson(jsonResponse);
           } else {
-            debugPrint("ERROR: Unexpected JSON format: $jsonResponse");
-            return null;
+            debugPrint("Unexpected JSON format: $jsonResponse");
           }
-        } catch (e) {
-          debugPrint("JSON decode error: $e");
-          return null;
+        } catch (e, stacktrace) {
+          debugPrint("JSON Decode Error: $e");
+          debugPrint("Stacktrace: $stacktrace");
         }
       } else {
-        debugPrint(
-            "ERROR: API returned status code ${response.statusCode}: ${response.body}");
-        return null;
+        debugPrint("API Error ${response.statusCode}: ${response.body}");
       }
-    } catch (e) {
-      debugPrint("ERROR: Exception occurred in getUser: $e");
-      return null;
+    } catch (e, stacktrace) {
+      debugPrint("Exception in getUser: $e");
+      debugPrint("Stacktrace: $stacktrace");
     }
+    return null;
   }
-
 }

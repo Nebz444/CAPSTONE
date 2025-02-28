@@ -1,53 +1,42 @@
-import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:webview_flutter/webview_flutter.dart'; // Import webview_flutter
 import 'package:baranguard/provider/user_provider.dart';
 import 'package:baranguard/views/account_settings_page.dart';
 import 'package:baranguard/views/complaints.dart';
 import 'package:baranguard/views/request_page.dart';
-import 'package:baranguard/Login.dart';
 import 'package:baranguard/views/contact.dart';
 import 'package:baranguard/views/report.dart';
-import '../model/users_model.dart';
+import 'package:baranguard/firstPage.dart';
+import 'package:baranguard/views/settings.dart';
+import 'package:baranguard/utils/route_utils.dart';
+import 'package:baranguard/views/baranguardfeed.dart';
 
 class BaranguardDashboard extends StatefulWidget {
+  const BaranguardDashboard({super.key});
+
   @override
   _BaranguardDashboardState createState() => _BaranguardDashboardState();
 }
 
 class _BaranguardDashboardState extends State<BaranguardDashboard> {
-  int _currentIndex = 2; // Default index for the home tab
-  User? user;
+  int _selectedIndex = 2; // Default selected index (Home)
+  late Timer _timer;
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Cancel timer to prevent memory leaks
+    super.dispose();
+  }
 
   final List<Widget> _pages = [
     RequestPage(),
     ComplaintsForm(),
-    FacebookMediaFeed(), // Updated Home Page with Facebook Feed
+    const BaranguardFeed(), // BaranguardFeed is one of the pages
     ReportPage(),
-    ContactPage(),
+    const ContactPage(),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchUserProfile();
-  }
-
-  // Load user profile
-  Future<void> _fetchUserProfile() async {
-    user = Provider.of<UserProvider>(context, listen: false).user;
-  }
-
-  // Navigate to Account Settings Page
-  void _navigateToAccountSettings() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AccountSettingsPage()),
-    );
-  }
 
   // Confirm Logout Dialog
   Future<void> _confirmLogout(BuildContext context) async {
@@ -64,14 +53,22 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
             ),
             TextButton(
               onPressed: () async {
-                Provider.of<UserProvider>(context, listen: false).clearUser();
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                await prefs.clear();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => BaranguardLoginPage()),
-                      (Route<dynamic> route) => false,
-                );
+                try {
+                  final userProvider = Provider.of<UserProvider>(context, listen: false);
+                  userProvider.clearUser();
+
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('profileImage');
+                  await prefs.remove('username');
+
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    RouteUtils.createRoute(const BaranguardWelcomePage()),
+                        (Route<dynamic> route) => false,
+                  );
+                } catch (e) {
+                  print("Error during logout: $e");
+                }
               },
               child: const Text("Logout", style: TextStyle(color: Colors.red)),
             ),
@@ -81,35 +78,58 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
     );
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Baranguard'),
+        backgroundColor: const Color(0xFF154C79),
+        title: const Text(
+          'Baranguard',
+          style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
+            icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
           ),
         ),
         actions: [
-          GestureDetector(
-            onTap: _navigateToAccountSettings,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Consumer<UserProvider>(
-                builder: (context, userProvider, child) {
-                  return CircleAvatar(
-                    radius: 20,
+          // Notification Icon (without badge or functionality)
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {
+              // Add notification functionality here if needed
+            },
+          ),
+          // Profile Icon
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Consumer<UserProvider>(
+              builder: (context, userProvider, child) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(context, RouteUtils.createRoute(AccountSettingsPage()));
+                  },
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white,
                     backgroundImage: userProvider.user?.profileImage != null &&
                         userProvider.user!.profileImage!.isNotEmpty
                         ? NetworkImage(userProvider.user!.profileImage!)
                         : const AssetImage('assets/default_profile.png') as ImageProvider,
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -119,9 +139,9 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(color: Colors.red[200]),
+              decoration: const BoxDecoration(color: Color(0xFF154C79)),
               child: Text(
-                'Welcome, ${user?.username ?? "User"}',
+                'Welcome, ${userProvider.user?.username ?? "User"}',
                 style: const TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
@@ -129,35 +149,38 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               leading: const Icon(Icons.mail),
               title: const Text('Request'),
               onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => RequestPage()));
+                Navigator.push(context, RouteUtils.createRoute(RequestPage()));
               },
             ),
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text('Complaints'),
               onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ComplaintsForm()));
+                Navigator.push(context, RouteUtils.createRoute(ComplaintsForm()));
               },
             ),
             ListTile(
               leading: const Icon(Icons.report_problem),
               title: const Text('Reports'),
               onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage()));
+                Navigator.push(context, RouteUtils.createRoute(ReportPage()));
               },
             ),
             ListTile(
               leading: const Icon(Icons.phone),
               title: const Text('Contacts'),
               onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ContactPage()));
+                Navigator.push(context, RouteUtils.createRoute(const ContactPage()));
               },
             ),
             const Divider(),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.push(context, RouteUtils.createRoute(SettingsPage()));
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
@@ -166,125 +189,22 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
           ],
         ),
       ),
-      body: _pages[_currentIndex], // Display selected page
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        selectedItemColor: Colors.teal,
-        unselectedItemColor: Colors.black54,
+        backgroundColor: const Color(0xFF154C79),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
         showSelectedLabels: false,
         showUnselectedLabels: false,
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.mail), label: "Request"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Complaints"),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.report_problem), label: "Report"),
-          BottomNavigationBarItem(icon: Icon(Icons.phone), label: "Contacts"),
-        ],
-      ),
-    );
-  }
-}
-
-// Facebook Media Feed Page using WebView
-class FacebookMediaFeed extends StatefulWidget {
-  @override
-  _FacebookMediaFeedState createState() => _FacebookMediaFeedState();
-}
-
-class _FacebookMediaFeedState extends State<FacebookMediaFeed> {
-  late final WebViewController _controller;
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setUserAgent(
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-              "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageFinished: (String url) {
-            setState(() {
-              isLoading = false;
-            });
-          },
-          onNavigationRequest: (NavigationRequest request) async {
-            // If it's a Facebook link, try opening in the Facebook app
-            if (request.url.contains("facebook.com")) {
-              Uri fbAppUri = Uri.parse("fb://facewebmodal/f?href=${request.url}");
-              if (await canLaunchUrl(fbAppUri)) {
-                await launchUrl(fbAppUri); // Open in Facebook app
-              } else {
-                await launchUrl(Uri.parse(request.url)); // Open in browser
-              }
-              return NavigationDecision.prevent; // Stop WebView from loading
-            }
-            return NavigationDecision.navigate;
-          },
-        ),
-      )
-      ..loadHtmlString(_generateFacebookEmbed());
-  }
-
-  String _generateFacebookEmbed() {
-    return '''
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-      <meta charset="UTF-8">
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-          background: #f8f9fa;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          overflow: hidden;
-        }
-        .fb-container {
-          width: 100vw;
-          max-width: 100%;
-          height: 100vh;
-          overflow: hidden;
-          position: relative;
-        }
-        iframe {
-          width: 100%;
-          height: 100%;
-          border: none;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="fb-container">
-        <iframe
-          id="fb-frame"
-          src="https://www.facebook.com/plugins/page.php?href=https://www.facebook.com/PhilippineSTAR&tabs=timeline&width=500&height=800&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true"
-          scrolling="no">
-        </iframe>
-      </div>
-    </body>
-    </html>
-    ''';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          WebViewWidget(controller: _controller),
-          if (isLoading) const Center(child: CircularProgressIndicator()),
+          BottomNavigationBarItem(icon: Icon(Icons.article, size: 30), label: 'Reports'),
+          BottomNavigationBarItem(icon: Icon(Icons.people, size: 30), label: 'Community'),
+          BottomNavigationBarItem(icon: Icon(Icons.home, size: 35), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.campaign, size: 30), label: 'Announcements'),
+          BottomNavigationBarItem(icon: Icon(Icons.phone, size: 30), label: 'Contact'),
         ],
       ),
     );

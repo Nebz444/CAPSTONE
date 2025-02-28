@@ -3,7 +3,10 @@ class User {
   String username;
   String? email;
   String? password;
-  String? fullName;
+  String? lastName;
+  String? firstName;
+  String? middleName;
+  String? suffix;
   DateTime? birthday;
   String? mobileNumber;
   String? homeAddress;
@@ -14,7 +17,10 @@ class User {
     required this.username,
     this.email,
     this.password,
-    this.fullName,
+    this.lastName,
+    this.firstName,
+    this.middleName,
+    this.suffix,
     this.birthday,
     this.mobileNumber,
     this.homeAddress,
@@ -27,7 +33,10 @@ class User {
       'username': username,
       'email_address': email,
       'password': password,
-      'full_name': fullName,
+      'last_name': lastName,
+      'first_name': firstName,
+      'middle_name': middleName,
+      'suffix': suffix,
       'birthday': birthday?.toIso8601String(), // Serialize DateTime as ISO8601 string
       'mobile_number': mobileNumber,
       'home_address': homeAddress,
@@ -41,7 +50,10 @@ class User {
       username: json['username'],
       email: json['email_address'],
       password: json['password'],
-      fullName: json['full_name'],
+      lastName: json['last_name'],
+      firstName: json['first_name'],
+      middleName: json['middle_name'],
+      suffix: json['suffix'],
       birthday: json['birthday'] != null
           ? DateTime.parse(json['birthday'])
           : null,

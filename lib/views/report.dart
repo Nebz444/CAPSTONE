@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -5,8 +6,11 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReportPage extends StatefulWidget {
+  const ReportPage({super.key});
+
   @override
   _ReportPageState createState() => _ReportPageState();
 }
@@ -23,6 +27,13 @@ class _ReportPageState extends State<ReportPage> {
     _determinePosition();
   }
 
+  Future<void> saveReportId(int reportId) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> reportIds = prefs.getStringList('user_reports') ?? [];
+    reportIds.add(reportId.toString());
+    await prefs.setStringList('user_reports', reportIds);
+  }
+
   Future<void> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -30,7 +41,7 @@ class _ReportPageState extends State<ReportPage> {
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location services are disabled. Please enable them.')),
+        const SnackBar(content: Text('Location services are disabled. Please enable them.')),
       );
       return;
     }
@@ -40,7 +51,7 @@ class _ReportPageState extends State<ReportPage> {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Location permissions are denied.')),
+          const SnackBar(content: Text('Location permissions are denied.')),
         );
         return;
       }
@@ -48,7 +59,7 @@ class _ReportPageState extends State<ReportPage> {
 
     if (permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location permissions are permanently denied.')),
+        const SnackBar(content: Text('Location permissions are permanently denied.')),
       );
       return;
     }
@@ -75,7 +86,7 @@ class _ReportPageState extends State<ReportPage> {
   Future<void> _confirmAndSubmitReport() async {
     if (_currentLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Location not available. Please try again later.')),
+        const SnackBar(content: Text('Location not available. Please try again later.')),
       );
       return;
     }
@@ -87,7 +98,7 @@ class _ReportPageState extends State<ReportPage> {
 
     if (note.isEmpty || imagePath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please add a note and upload evidence.')),
+        const SnackBar(content: Text('Please add a note and upload evidence.')),
       );
       return;
     }
@@ -96,16 +107,16 @@ class _ReportPageState extends State<ReportPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Report Submission'),
-          content: Text('Do you want to submit the report?'),
+          title: const Text('Confirm Report Submission'),
+          content: const Text('Do you want to submit the report?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Submit'),
+              child: const Text('Submit'),
             ),
           ],
         );
@@ -122,15 +133,22 @@ class _ReportPageState extends State<ReportPage> {
 
         final response = await request.send();
         final responseString = await response.stream.bytesToString();
-        print("Server Response: $responseString");
+        final data = jsonDecode(responseString);
 
-        if (response.statusCode == 200) {
+        if (response.statusCode == 200 && data['status'] == 'success') {
+          // ✅ Store the report ID locally
+          final SharedPreferences prefs = await SharedPreferences.getInstance();
+          List<String> reportIds = prefs.getStringList('user_reports') ?? [];
+          String newReportId = data['report_id'].toString();
+          reportIds.add(newReportId);
+          await prefs.setStringList('user_reports', reportIds);
+
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Report submitted successfully!')),
+            const SnackBar(content: Text('Report submitted successfully!')),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to submit the report.')),
+            const SnackBar(content: Text('Failed to submit the report.')),
           );
         }
       } catch (e) {
@@ -141,14 +159,15 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Report Location'),
+        title: const Text('Report Location'),
       ),
       body: _currentLocation == null
-          ? Center(
+          ? const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -174,7 +193,7 @@ class _ReportPageState extends State<ReportPage> {
                   children: [
                     TileLayer(
                       urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      subdomains: ['a', 'b', 'c'],
+                      subdomains: const ['a', 'b', 'c'],
                       userAgentPackageName: 'com.example.yourapp',
                     ),
                     MarkerLayer(
@@ -183,7 +202,7 @@ class _ReportPageState extends State<ReportPage> {
                           point: _currentLocation!,
                           width: 80.0,
                           height: 80.0,
-                          builder: (ctx) => Icon(
+                          builder: (ctx) => const Icon(
                             Icons.my_location,
                             color: Colors.green,
                             size: 40.0,
@@ -193,7 +212,7 @@ class _ReportPageState extends State<ReportPage> {
                           point: _targetLocation,
                           width: 80.0,
                           height: 80.0,
-                          builder: (ctx) => Icon(
+                          builder: (ctx) => const Icon(
                             Icons.location_on,
                             color: Colors.red,
                             size: 40.0,
@@ -204,20 +223,20 @@ class _ReportPageState extends State<ReportPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextField(
                 controller: _noteController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Enter a note',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: _pickImage,
-                icon: Icon(Icons.camera),
-                label: Text('Capture Evidence'),
+                icon: const Icon(Icons.camera),
+                label: const Text('Capture Evidence'),
               ),
               if (_imageFile != null)
                 Padding(
@@ -232,10 +251,10 @@ class _ReportPageState extends State<ReportPage> {
                     ),
                   ),
                 ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _confirmAndSubmitReport,
-                child: Text('Submit Report'),
+                child: const Text('Submit Report'),
               ),
             ],
           ),
