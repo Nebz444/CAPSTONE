@@ -1,11 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert'; // For encoding JSON
+import 'package:provider/provider.dart';
+import '../model/users_model.dart'; // Ensure this import path is correct
+import '../provider/user_provider.dart'; // Ensure this import path is correct
 
 class CedulaForm extends StatefulWidget {
   final String formType;
 
-  CedulaForm({required this.formType});
+  const CedulaForm({super.key, required this.formType});
 
   @override
   _CedulaFormState createState() => _CedulaFormState();
@@ -31,6 +34,21 @@ class _CedulaFormState extends State<CedulaForm> {
   // Dropdown selections
   String? _selectedGender = 'Male'; // Default value
   String? _selectedCivilStatus = 'Single'; // Default value
+
+  // User details
+  User? user;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserDetails();
+  }
+
+  // Fetch user details from the provider
+  Future<void> fetchUserDetails() async {
+    user = Provider.of<UserProvider>(context, listen: false).user;
+    print("Fetched User ID: ${user?.id}"); // Debug print
+  }
 
   // Helper to parse integers and doubles
   int? parseInt(String value) => int.tryParse(value);
@@ -64,14 +82,12 @@ class _CedulaFormState extends State<CedulaForm> {
 
     if (pickedDate != null) {
       setState(() {
-        _birthdayController.text =
-        "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+        _birthdayController.text = "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
       });
     }
   }
-  // Form submission function
 
-  //Confirmation
+  // Confirmation dialog before submission
   Future<void> confirmSubmission() async {
     // Show the confirmation dialog to the user
     bool? confirm = await showDialog(
@@ -115,53 +131,72 @@ class _CedulaFormState extends State<CedulaForm> {
     }
   }
 
-// Modify the submitForm function
+  // Form submission function
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final apiUrl = 'https://baranguard.shop/API/cedula.php';
+      const apiUrl = 'https://baranguard.shop/API/cedula.php';
 
-      final formData = {
-        'full_name': _fullNameController.text,
-        'house_number': _houseNumberController.text,
-        'street': _streetController.text,
-        'subdivision': _subdivisionController.text,
-        'age': _ageController.text,
-        'gender': _selectedGender,
-        'civil_status': _selectedCivilStatus,
-        'birthplace': _birthplaceController.text,
-        'birthday': _birthdayController.text,
-        'height': _heightController.text,
-        'weight': _weightController.text,
-        'contact_number': _contactNumberController.text,
-        'emergency_number': _emergencyNumberController.text,
-      };
+      // Prepare form data
+      final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      request.fields['full_name'] = _fullNameController.text.trim();
+      request.fields['house_number'] = _houseNumberController.text.trim();
+      request.fields['street'] = _streetController.text.trim();
+      request.fields['subdivision'] = _subdivisionController.text.trim().isEmpty
+          ? 'N/A'
+          : _subdivisionController.text.trim();
+      request.fields['age'] = _ageController.text.trim();
+      request.fields['gender'] = _selectedGender ?? 'Male';
+      request.fields['civil_status'] = _selectedCivilStatus ?? 'Single';
+      request.fields['birthplace'] = _birthplaceController.text.trim();
+      request.fields['birthday'] = _birthdayController.text.trim();
+      request.fields['height'] = _heightController.text.trim();
+      request.fields['weight'] = _weightController.text.trim();
+      request.fields['contact_number'] = _contactNumberController.text.trim();
+      request.fields['emergency_number'] = _emergencyNumberController.text.trim();
+      request.fields['user_id'] = user!.id.toString(); // Include user ID
+
+      // Debug: Print the request payload
+      print("Request Payload: ${request.fields}");
 
       try {
-        final response = await http.post(
-          Uri.parse(apiUrl),
-          headers: {"Content-Type": "application/x-www-form-urlencoded"},
-          body: formData,
-        );
+        final response = await request.send();
+        final responseString = await response.stream.bytesToString();
+        print("API Response: $responseString");
 
-        final responseData = jsonDecode(response.body);
+        final responseBody = jsonDecode(responseString);
 
-        if (response.statusCode == 200 && responseData["status"] == "success") {
+        if (response.statusCode == 200 && responseBody['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(responseData["message"])),
+            const SnackBar(content: Text("Cedula form submitted successfully!")),
           );
+          _clearForm();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error: ${responseData["message"]}")),
+            SnackBar(content: Text(responseBody['message'] ?? "Failed to submit request.")),
           );
         }
       } catch (e) {
+        print("Error: $e");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          const SnackBar(content: Text("An error occurred. Please try again.")),
         );
       }
     }
   }
 
+  void _clearForm() {
+    _fullNameController.clear();
+    _houseNumberController.clear();
+    _streetController.clear();
+    _subdivisionController.clear();
+    _ageController.clear();
+    _birthplaceController.clear();
+    _heightController.clear();
+    _weightController.clear();
+    _contactNumberController.clear();
+    _emergencyNumberController.clear();
+    _birthdayController.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +221,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: _fullNameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Full Name',
                     border: OutlineInputBorder(),
                   ),
@@ -195,7 +230,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _houseNumberController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'House Number',
                     border: OutlineInputBorder(),
                   ),
@@ -204,7 +239,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _streetController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Street',
                     border: OutlineInputBorder(),
                   ),
@@ -213,7 +248,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _subdivisionController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Subdivision (if any)',
                     border: OutlineInputBorder(),
                   ),
@@ -222,7 +257,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 TextFormField(
                   controller: _ageController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Age',
                     border: OutlineInputBorder(),
                   ),
@@ -234,18 +269,18 @@ class _CedulaFormState extends State<CedulaForm> {
                   child: AbsorbPointer(
                     child: TextFormField(
                       controller: _birthdayController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Birthday (YYYY-MM-DD)',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) => value!.isEmpty ? 'Please enter your birthday' : null,
+                      validator: (value) => value!.isEmpty ? 'Please select your birthday' : null,
                     ),
                   ),
                 ),
                 const SizedBox(height: 15),
                 DropdownButtonFormField<String>(
                   value: _selectedGender,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Gender',
                     border: OutlineInputBorder(),
                   ),
@@ -257,7 +292,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 const SizedBox(height: 15),
                 DropdownButtonFormField<String>(
                   value: _selectedCivilStatus,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Civil Status',
                     border: OutlineInputBorder(),
                   ),
@@ -269,7 +304,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _birthplaceController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Birthplace',
                     border: OutlineInputBorder(),
                   ),
@@ -279,7 +314,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 TextFormField(
                   controller: _heightController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Height (cm)',
                     border: OutlineInputBorder(),
                   ),
@@ -289,7 +324,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 TextFormField(
                   controller: _weightController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Weight (kg)',
                     border: OutlineInputBorder(),
                   ),
@@ -299,7 +334,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 TextFormField(
                   controller: _contactNumberController,
                   keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Contact Number',
                     border: OutlineInputBorder(),
                   ),
@@ -309,7 +344,7 @@ class _CedulaFormState extends State<CedulaForm> {
                 TextFormField(
                   controller: _emergencyNumberController,
                   keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'In case of Emergency',
                     border: OutlineInputBorder(),
                   ),

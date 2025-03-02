@@ -1,20 +1,24 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert'; // For encoding JSON
+import 'package:provider/provider.dart';
+import '../model/users_model.dart'; // Ensure this import path is correct
+import '../provider/user_provider.dart'; // Ensure this import path is correct
 
 class IndigencyForm extends StatefulWidget {
   final String formType;
 
-  IndigencyForm({required this.formType});
+  const IndigencyForm({super.key, required this.formType});
 
   @override
   _IndigencyFormState createState() => _IndigencyFormState();
 }
 
 class _IndigencyFormState extends State<IndigencyForm> {
+  // Form key for validation
   final _formKey = GlobalKey<FormState>();
 
-  // Add a controller for the "Other" purpose
+  // Text controllers for inputs
   final TextEditingController _managerNameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _birthdayController = TextEditingController();
@@ -23,13 +27,26 @@ class _IndigencyFormState extends State<IndigencyForm> {
   final TextEditingController _subdivisionController = TextEditingController();
   final TextEditingController _patientNameController = TextEditingController();
   final TextEditingController _relationController = TextEditingController();
-  final TextEditingController _otherPurposeController = TextEditingController(); // New controller
+  final TextEditingController _otherPurposeController = TextEditingController();
 
+  // Dropdown selections
   String? _selectedPurpose = 'Medical and Financial'; // Default value
   bool _showOtherPurposeField = false; // Track if "Other" is selected
 
-  int? parseInt(String value) => int.tryParse(value);
+  // User details
+  User? user;
 
+  @override
+  void initState() {
+    super.initState();
+    fetchUserDetails();
+  }
+
+  Future<void> fetchUserDetails() async {
+    user = Provider.of<UserProvider>(context, listen: false).user;
+  }
+
+  // Dispose controllers to avoid memory leaks
   @override
   void dispose() {
     _managerNameController.dispose();
@@ -40,8 +57,24 @@ class _IndigencyFormState extends State<IndigencyForm> {
     _subdivisionController.dispose();
     _patientNameController.dispose();
     _relationController.dispose();
-    _otherPurposeController.dispose(); // Dispose of the "Other" controller
+    _otherPurposeController.dispose();
     super.dispose();
+  }
+
+  // Date picker for birthday
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        _birthdayController.text = "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+      });
+    }
   }
 
   // Confirmation dialog before submission
@@ -85,54 +118,71 @@ class _IndigencyFormState extends State<IndigencyForm> {
       await submitForm();
     }
   }
-  //
 
-  // Submission logic (updated)
+  // Form submission function
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final apiUrl = 'https://baranguard.shop/API/indigency_form.php';
+      const apiUrl = 'https://baranguard.shop/API/indigency_form.php';
 
       // Determine purpose and set otherInput if necessary
       String purpose = _selectedPurpose == 'Other' ? _otherPurposeController.text : _selectedPurpose!;
       String? otherInput = _selectedPurpose == 'Other' ? _otherPurposeController.text : null;
 
-      final formData = {
-        'managerName': _managerNameController.text,
-        'age': _ageController.text,
-        'birthday': _birthdayController.text,
-        'houseNumber': _houseNumberController.text,
-        'street': _streetController.text,
-        'subdivision': _subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text,
-        'patientName': _patientNameController.text,
-        'relation': _relationController.text,
-        'purpose': purpose,
-        if (otherInput != null) 'otherInput': otherInput, // Only include if "Other" is selected
-        'submit': '1' // Add this line to trigger the PHP if check for submission
-      };
+      // Prepare form data
+      final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      request.fields['managerName'] = _managerNameController.text.trim();
+      request.fields['age'] = _ageController.text.trim();
+      request.fields['birthday'] = _birthdayController.text.trim();
+      request.fields['houseNumber'] = _houseNumberController.text.trim();
+      request.fields['street'] = _streetController.text.trim();
+      request.fields['subdivision'] = _subdivisionController.text.trim().isEmpty
+          ? 'N/A'
+          : _subdivisionController.text.trim();
+      request.fields['patientName'] = _patientNameController.text.trim();
+      request.fields['relation'] = _relationController.text.trim();
+      request.fields['purpose'] = purpose;
+      if (otherInput != null) request.fields['otherInput'] = otherInput; // Only include if "Other" is selected
+      request.fields['user_id'] = user!.id.toString(); // Include user ID
+
+      // Debug: Print the request payload
+      print("Request Payload: ${request.fields}");
 
       try {
-        final response = await http.post(
-          Uri.parse(apiUrl),
-          headers: {"Content-Type": "application/x-www-form-urlencoded"}, // Change to form URL encoded
-          body: formData, // Send form data directly
-        );
+        final response = await request.send();
+        final responseString = await response.stream.bytesToString();
+        print("API Response: $responseString");
 
-        if (response.statusCode == 200) {
-          final responseData = response.body; // PHP will handle response; you might want to process if needed
+        final responseBody = jsonDecode(responseString);
+
+        if (response.statusCode == 200 && responseBody['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Form submitted successfully!')),
+            const SnackBar(content: Text("Indigency form submitted successfully!")),
           );
+          _clearForm();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to submit form. Please try again.')),
+            SnackBar(content: Text(responseBody['message'] ?? "Failed to submit request.")),
           );
         }
       } catch (e) {
+        print("Error: $e");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          const SnackBar(content: Text("An error occurred. Please try again.")),
         );
       }
     }
+  }
+
+  void _clearForm() {
+    _managerNameController.clear();
+    _ageController.clear();
+    _birthdayController.clear();
+    _houseNumberController.clear();
+    _streetController.clear();
+    _subdivisionController.clear();
+    _patientNameController.clear();
+    _relationController.clear();
+    _otherPurposeController.clear();
   }
 
   @override
@@ -151,42 +201,47 @@ class _IndigencyFormState extends State<IndigencyForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Text(
+                  'Please fill out the form below:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
                 TextFormField(
                   controller: _managerNameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Name of the one who manages',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) => value!.isEmpty ? 'Please enter the manager\'s name' : null,
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 TextFormField(
                   controller: _ageController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Age',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => parseInt(value!) == null ? 'Enter a valid age' : null,
+                  validator: (value) => int.tryParse(value!) == null ? 'Enter a valid age' : null,
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 TextFormField(
                   controller: _birthdayController,
                   decoration: InputDecoration(
                     labelText: 'Birthday',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
-                      icon: Icon(Icons.calendar_today),
+                      icon: const Icon(Icons.calendar_today),
                       onPressed: () => _selectDate(context),
                     ),
                   ),
                   readOnly: true, // User cannot type directly, only pick date
                   validator: (value) => value!.isEmpty ? 'Please select your birthday' : null,
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 TextFormField(
                   controller: _houseNumberController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'House Number',
                     border: OutlineInputBorder(),
                   ),
@@ -195,7 +250,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _streetController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Street',
                     border: OutlineInputBorder(),
                   ),
@@ -204,7 +259,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _subdivisionController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Subdivision (if any)',
                     border: OutlineInputBorder(),
                   ),
@@ -212,7 +267,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _patientNameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Name of the Patient',
                     border: OutlineInputBorder(),
                   ),
@@ -221,7 +276,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _relationController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Relation to the Patient',
                     border: OutlineInputBorder(),
                   ),
@@ -230,7 +285,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
                 const SizedBox(height: 15),
                 DropdownButtonFormField<String>(
                   value: _selectedPurpose,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Purpose',
                     border: OutlineInputBorder(),
                   ),
@@ -260,7 +315,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
                     padding: const EdgeInsets.only(top: 15.0),
                     child: TextFormField(
                       controller: _otherPurposeController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Please specify other purpose',
                         border: OutlineInputBorder(),
                       ),
@@ -293,20 +348,5 @@ class _IndigencyFormState extends State<IndigencyForm> {
         ),
       ),
     );
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-
-    if (pickedDate != null) {
-      setState(() {
-        _birthdayController.text = "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
-      });
-    }
   }
 }
