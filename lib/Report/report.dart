@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -6,11 +5,11 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../model/users_model.dart';
+import '../provider/user_provider.dart';
 
 class ReportPage extends StatefulWidget {
-  const ReportPage({super.key});
-
   @override
   _ReportPageState createState() => _ReportPageState();
 }
@@ -20,18 +19,18 @@ class _ReportPageState extends State<ReportPage> {
   XFile? _imageFile;
   final TextEditingController _noteController = TextEditingController();
   final LatLng _targetLocation = LatLng(15.113359178687087, 120.56616699467249);
+  User? user;
 
   @override
   void initState() {
     super.initState();
     _determinePosition();
+    fetchUserDetails();
   }
 
-  Future<void> saveReportId(int reportId) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> reportIds = prefs.getStringList('user_reports') ?? [];
-    reportIds.add(reportId.toString());
-    await prefs.setStringList('user_reports', reportIds);
+  //nonsense pero
+  Future<void> fetchUserDetails() async {
+    user = Provider.of<UserProvider>(context, listen: false).user;
   }
 
   Future<void> _determinePosition() async {
@@ -126,23 +125,18 @@ class _ReportPageState extends State<ReportPage> {
     if (confirm == true) {
       try {
         final request = http.MultipartRequest('POST', Uri.parse('https://baranguard.shop/API/report.php'));
+        String userId = user!.id.toString();
         request.fields['latitude'] = latitude.toString();
         request.fields['longitude'] = longitude.toString();
         request.fields['note'] = note;
+        request.fields['user_id'] = userId;
         request.files.add(await http.MultipartFile.fromPath('photo', imagePath));
 
         final response = await request.send();
         final responseString = await response.stream.bytesToString();
-        final data = jsonDecode(responseString);
+        print("Server Response: $responseString");
 
-        if (response.statusCode == 200 && data['status'] == 'success') {
-          // ✅ Store the report ID locally
-          final SharedPreferences prefs = await SharedPreferences.getInstance();
-          List<String> reportIds = prefs.getStringList('user_reports') ?? [];
-          String newReportId = data['report_id'].toString();
-          reportIds.add(newReportId);
-          await prefs.setStringList('user_reports', reportIds);
-
+        if (response.statusCode == 200) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Report submitted successfully!')),
           );
@@ -158,7 +152,6 @@ class _ReportPageState extends State<ReportPage> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +186,7 @@ class _ReportPageState extends State<ReportPage> {
                   children: [
                     TileLayer(
                       urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      subdomains: const ['a', 'b', 'c'],
+                      subdomains: ['a', 'b', 'c'],
                       userAgentPackageName: 'com.example.yourapp',
                     ),
                     MarkerLayer(

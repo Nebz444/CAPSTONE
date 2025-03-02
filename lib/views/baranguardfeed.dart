@@ -99,7 +99,7 @@ class _BaranguardFeedState extends State<BaranguardFeed> {
             ListTile(
               leading: const CircleAvatar(child: Icon(Icons.person)),
               title: Text(
-                post['full_name'] ?? 'Unknown User',
+                post['username'] ?? '',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: Text(

@@ -1,5 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import '../model/users_model.dart'; // Ensure this import path is correct
+import '../provider/user_provider.dart'; // Ensure this import path is correct
 
 class BarangayID extends StatefulWidget {
   final String formType;
@@ -12,8 +16,6 @@ class BarangayID extends StatefulWidget {
 
 class _BarangayIDState extends State<BarangayID> {
   final _formKey = GlobalKey<FormState>();
-
-  // Controllers for form fields
   final _fullNameController = TextEditingController();
   final _houseNumberController = TextEditingController();
   final _streetController = TextEditingController();
@@ -29,22 +31,96 @@ class _BarangayIDState extends State<BarangayID> {
   String? _selectedGender = 'Male';
   String? _selectedCivilStatus = 'Single';
 
-  bool _isLoading = false;
+  User? user;
 
   @override
-  void dispose() {
-    _fullNameController.dispose();
-    _houseNumberController.dispose();
-    _streetController.dispose();
-    _subdivisionController.dispose();
-    _ageController.dispose();
-    _birthplaceController.dispose();
-    _heightController.dispose();
-    _weightController.dispose();
-    _contactNumberController.dispose();
-    _emergencyNumberController.dispose();
-    _birthdayController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    fetchUserDetails();
+  }
+
+  Future<void> fetchUserDetails() async {
+    user = Provider.of<UserProvider>(context, listen: false).user;
+  }
+
+  Future<void> submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      const apiUrl = 'https://baranguard.shop/API/barangay_id.php';
+
+      // Prepare form data
+      final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      request.fields['full_name'] = _fullNameController.text.trim();
+      request.fields['house_number'] = _houseNumberController.text.trim();
+      request.fields['street'] = _streetController.text.trim();
+      request.fields['subdivision'] = _subdivisionController.text.trim().isEmpty
+          ? 'N/A'
+          : _subdivisionController.text.trim();
+      request.fields['age'] = _ageController.text.trim();
+      request.fields['gender'] = _selectedGender ?? 'Male';
+      request.fields['civil_status'] = _selectedCivilStatus ?? 'Single';
+      request.fields['birthplace'] = _birthplaceController.text.trim();
+      request.fields['birthday'] = _birthdayController.text.trim();
+      request.fields['height'] = _heightController.text.trim();
+      request.fields['weight'] = _weightController.text.trim();
+      request.fields['contact_number'] = _contactNumberController.text.trim();
+      request.fields['emergency_number'] = _emergencyNumberController.text.trim();
+      request.fields['user_id'] = user!.id.toString();
+
+      // Debug: Print the request payload
+      print("Request Payload: ${request.fields}");
+
+      try {
+        final response = await request.send();
+        final responseString = await response.stream.bytesToString();
+        print("Raw API Response: $responseString"); // Debugging line
+
+        // Check if the response is valid JSON
+        if (responseString.trim().isEmpty) {
+          throw FormatException("Empty response from server");
+        }
+
+        final responseBody = jsonDecode(responseString);
+
+        if (response.statusCode == 200 && responseBody['status'] == 'success') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Barangay ID request submitted successfully!")),
+          );
+          _clearForm();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseBody['message'] ?? "Failed to submit request.")),
+          );
+        }
+      } on FormatException catch (e) {
+        print("JSON Decode Error: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid response from the server. Please try again.")),
+        );
+      } catch (e) {
+        print("Error: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("An error occurred. Please try again.")),
+        );
+      }
+    }
+  }
+
+  void _clearForm() {
+    _fullNameController.clear();
+    _houseNumberController.clear();
+    _streetController.clear();
+    _subdivisionController.clear();
+    _ageController.clear();
+    _birthplaceController.clear();
+    _heightController.clear();
+    _weightController.clear();
+    _contactNumberController.clear();
+    _emergencyNumberController.clear();
+    _birthdayController.clear();
+    setState(() {
+      _selectedGender = 'Male';
+      _selectedCivilStatus = 'Single';
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -60,99 +136,6 @@ class _BarangayIDState extends State<BarangayID> {
         _birthdayController.text =
         "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
       });
-    }
-  }
-
-  //Confirmation
-  Future<void> confirmSubmission() async {
-    bool? confirm = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Confirm Submission"),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: <Widget>[
-              Text("Name: ${_fullNameController.text}"),
-              Text("Age: ${_ageController.text}"),
-              Text("Birthday: ${_birthdayController.text}"),
-              Text("Birthplace: ${_birthplaceController.text}"),
-              Text("House Number: ${_houseNumberController.text}"),
-              Text("Street: ${_streetController.text}"),
-              Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
-              Text("Gender: ${_selectedGender ?? 'N/A'}"),
-              Text("Civil Status: ${_selectedCivilStatus ?? 'N/A'}"),
-              Text("Height: ${_heightController.text} cm"),
-              Text("Weight: ${_weightController.text} kg"),
-              Text("Contact Number: ${_contactNumberController.text}"),
-              Text("Emergency Contact: ${_emergencyNumberController.text}"),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: const Text("Edit"),
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          TextButton(
-            child: const Text("Confirm"),
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      submitForm();
-    }
-  }
-
-    Future<void> submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final apiUrl = 'https://baranguard.shop/API/barangay_id.php';
-
-      final formData = {
-        'full_name': _fullNameController.text,
-        'house_number': _houseNumberController.text,
-        'street': _streetController.text,
-        'subdivision': _subdivisionController.text,
-        'age': _ageController.text,
-        'gender': _selectedGender,
-        'civil_status': _selectedCivilStatus,
-        'birthplace': _birthplaceController.text,
-        'birthday': _birthdayController.text,
-        'height': _heightController.text,
-        'weight': _weightController.text,
-        'contact_number': _contactNumberController.text,
-        'emergency_number': _emergencyNumberController.text,
-        'submit': '1',
-      };
-
-        try {
-        final response = await http.post(
-          Uri.parse(apiUrl),
-          headers: {"Content-Type": "application/x-www-form-urlencoded"}, // Change to form URL encoded
-          body: formData, // Send form data directly
-        );
-
-        if (response.statusCode == 200) {
-          final responseData = response.body; // PHP will handle response; you might want to process if needed
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Form submitted successfully!')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to submit form. Please try again.')),
-          );
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
     }
   }
 
@@ -172,40 +155,238 @@ class _BarangayIDState extends State<BarangayID> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTextField(_fullNameController, 'Full Name'),
-                _buildTextField(_houseNumberController, 'House Number'),
-                _buildTextField(_streetController, 'Street'),
-                _buildTextField(_subdivisionController, 'Subdivision'),
-                _buildTextField(_ageController, 'Age', TextInputType.number),
-                GestureDetector(
-                  onTap: () => _selectDate(context),
-                  child: AbsorbPointer(
-                    child: _buildTextField(_birthdayController, 'Birthday (YYYY-MM-DD)'),
+                const Text(
+                  'Please fill out the form below:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _fullNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Full Name',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your full name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _houseNumberController,
+                  decoration: const InputDecoration(
+                    labelText: 'House Number',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your house number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _streetController,
+                  decoration: const InputDecoration(
+                    labelText: 'Street',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your street';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _subdivisionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Subdivision (if any)',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-                _buildDropdown('Gender', _selectedGender, ['Male', 'Female'],
-                        (newValue) => setState(() => _selectedGender = newValue)),
-                _buildDropdown('Civil Status', _selectedCivilStatus,
-                    ['Single', 'Married', 'Widowed', 'Anulled'],
-                        (newValue) => setState(() => _selectedCivilStatus = newValue)),
-                _buildTextField(_birthplaceController, 'Birthplace'),
-                _buildTextField(_heightController, 'Height (cm)', TextInputType.number),
-                _buildTextField(_weightController, 'Weight (kg)', TextInputType.number),
-                _buildTextField(_contactNumberController, 'Contact Number', TextInputType.phone),
-                _buildTextField(_emergencyNumberController, 'Emergency Contact', TextInputType.phone),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _ageController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Age',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your age';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _birthdayController,
+                  decoration: InputDecoration(
+                    labelText: 'Birthday',
+                    border: OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.calendar_today),
+                      onPressed: () => _selectDate(context),
+                    ),
+                  ),
+                  readOnly: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select your birthday';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _birthplaceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Birthplace',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your birthplace';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                DropdownButtonFormField<String>(
+                  value: _selectedGender,
+                  decoration: const InputDecoration(
+                    labelText: 'Gender',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['Male', 'Female'].map((gender) {
+                    return DropdownMenuItem(
+                      value: gender,
+                      child: Text(gender),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedGender = newValue;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select your gender';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                DropdownButtonFormField<String>(
+                  value: _selectedCivilStatus,
+                  decoration: const InputDecoration(
+                    labelText: 'Civil Status',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['Single', 'Married', 'Widowed', 'Anulled'].map((status) {
+                    return DropdownMenuItem(
+                      value: status,
+                      child: Text(status),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedCivilStatus = newValue;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select your civil status';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _heightController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Height (cm)',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your height';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _weightController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Weight (kg)',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your weight';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _contactNumberController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Contact Number',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your contact number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _emergencyNumberController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Emergency Contact',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your emergency contact number';
+                    }
+                    return null;
+                  },
+                ),
                 const SizedBox(height: 20),
                 Center(
-                  child: _isLoading
-                      ? CircularProgressIndicator()
-                      : ElevatedButton(
-                    onPressed: confirmSubmission,
-                    child: const Text(
-                      'Submit',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
+                  child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red[900],
                       padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                    ),
+                    onPressed: submitForm,
+                    child: const Text(
+                      'Submit',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
                   ),
                 ),
@@ -213,38 +394,6 @@ class _BarangayIDState extends State<BarangayID> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label,
-      [TextInputType keyboardType = TextInputType.text]) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(),
-        ),
-        validator: (value) => value!.isEmpty ? 'Please enter $label' : null,
-      ),
-    );
-  }
-
-  Widget _buildDropdown(
-      String label, String? value, List<String> items, ValueChanged<String?> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(),
-        ),
-        items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-        onChanged: onChanged,
       ),
     );
   }

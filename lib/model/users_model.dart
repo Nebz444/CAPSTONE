@@ -27,6 +27,7 @@ class User {
     this.profileImage, // ✅ Added profile image field
   });
 
+  // Convert User object to a JSON map
   Map<String, dynamic> toJson() {
     return {
       'user_id': id,
@@ -44,22 +45,54 @@ class User {
     };
   }
 
+  // Create a User object from a JSON map
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['user_id'],
-      username: json['username'],
-      email: json['email_address'],
-      password: json['password'],
-      lastName: json['last_name'],
-      firstName: json['first_name'],
-      middleName: json['middle_name'],
-      suffix: json['suffix'],
+      id: json['user_id'] as int?,
+      username: json['username'] as String,
+      email: json['email_address'] as String?,
+      password: json['password'] as String?,
+      lastName: json['last_name'] as String?,
+      firstName: json['first_name'] as String?,
+      middleName: json['middle_name'] as String?,
+      suffix: json['suffix'] as String?,
       birthday: json['birthday'] != null
-          ? DateTime.parse(json['birthday'])
+          ? DateTime.parse(json['birthday'] as String)
           : null,
-      mobileNumber: json['mobile_number'],
-      homeAddress: json['home_address'],
-      profileImage: json['profile_image_path'], // ✅ Retrieve profile image from API response
+      mobileNumber: json['mobile_number'] as String?,
+      homeAddress: json['home_address'] as String?,
+      profileImage: json['profile_image_path'] as String?, // ✅ Retrieve profile image from API response
+    );
+  }
+
+  // Create a copy of the User object with updated fields
+  User copyWith({
+    int? id,
+    String? username,
+    String? email,
+    String? password,
+    String? lastName,
+    String? firstName,
+    String? middleName,
+    String? suffix,
+    DateTime? birthday,
+    String? mobileNumber,
+    String? homeAddress,
+    String? profileImage,
+  }) {
+    return User(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      password: password ?? this.password,
+      lastName: lastName ?? this.lastName,
+      firstName: firstName ?? this.firstName,
+      middleName: middleName ?? this.middleName,
+      suffix: suffix ?? this.suffix,
+      birthday: birthday ?? this.birthday,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
+      homeAddress: homeAddress ?? this.homeAddress,
+      profileImage: profileImage ?? this.profileImage,
     );
   }
 }

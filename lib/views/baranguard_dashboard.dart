@@ -4,14 +4,15 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:baranguard/provider/user_provider.dart';
 import 'package:baranguard/views/account_settings_page.dart';
-import 'package:baranguard/views/complaints.dart';
+import 'package:baranguard/Complaints/complaints.dart';
 import 'package:baranguard/views/request_page.dart';
 import 'package:baranguard/views/contact.dart';
-import 'package:baranguard/views/report.dart';
+import 'package:baranguard/Report/report.dart';
 import 'package:baranguard/firstPage.dart';
 import 'package:baranguard/views/settings.dart';
 import 'package:baranguard/utils/route_utils.dart';
 import 'package:baranguard/views/baranguardfeed.dart';
+import '../Report/reportfirstpage.dart';
 
 class BaranguardDashboard extends StatefulWidget {
   const BaranguardDashboard({super.key});
@@ -30,11 +31,12 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
     super.dispose();
   }
 
+  //eto mga main buttons
   final List<Widget> _pages = [
     RequestPage(),
     ComplaintsForm(),
     const BaranguardFeed(), // BaranguardFeed is one of the pages
-    ReportPage(),
+    ReportFirstPage(),
     const ContactPage(),
   ];
 
@@ -105,14 +107,6 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
           ),
         ),
         actions: [
-          // Notification Icon (without badge or functionality)
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {
-              // Add notification functionality here if needed
-            },
-          ),
-          // Profile Icon
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: Consumer<UserProvider>(
@@ -163,7 +157,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               leading: const Icon(Icons.report_problem),
               title: const Text('Reports'),
               onTap: () {
-                Navigator.push(context, RouteUtils.createRoute(ReportPage()));
+                Navigator.push(context, RouteUtils.createRoute(ReportFirstPage()));
               },
             ),
             ListTile(

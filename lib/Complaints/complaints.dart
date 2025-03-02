@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:provider/provider.dart';
+import '../model/users_model.dart'; // Ensure this import path is correct
+import '../provider/user_provider.dart'; // Ensure this import path is correct
 
 class ComplaintsForm extends StatefulWidget {
   @override
@@ -14,37 +17,44 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
   final _subdivisionController = TextEditingController();
   final _contactNumberController = TextEditingController();
   final _narrativeController = TextEditingController();
+  User? user;
 
   String? _selectedComplaintType;
 
-  Future<void> submitComplaint() async {
-    final apiUrl = 'https://baranguard.shop/API/complaintsdb.php';
+  @override
+  void initState() {
+    super.initState();
+    fetchUserDetails();
+  }
 
-    // Prepare JSON data
-    final complaintData = jsonEncode({
-      'full_name': _nameController.text.trim(),
-      'house_number': _houseNumberController.text.trim(),
-      'street': _streetController.text.trim(),
-      'subdivision': _subdivisionController.text.trim(),
-      'complaint_type': _selectedComplaintType,
-      'contact_number': _contactNumberController.text.trim(),
-      'statement': _narrativeController.text.trim(),
-    });
+  Future<void> fetchUserDetails() async {
+    user = Provider.of<UserProvider>(context, listen: false).user;
+  }
+
+  Future<void> submitComplaint() async {
+    const apiUrl = 'https://baranguard.shop/API/complaintsdb.php';
+
+    // Prepare form data
+    final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+    request.fields['full_name'] = _nameController.text.trim();
+    request.fields['house_number'] = _houseNumberController.text.trim();
+    request.fields['street'] = _streetController.text.trim();
+    request.fields['subdivision'] = _subdivisionController.text.trim();
+    request.fields['complaint_type'] = _selectedComplaintType ?? '';
+    request.fields['contact_number'] = _contactNumberController.text.trim();
+    request.fields['statement'] = _narrativeController.text.trim();
+    request.fields['user_id'] = user!.id.toString(); // Include the user_id
 
     try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"}, // ✅ Corrected Content-Type
-        body: complaintData,
-      );
+      final response = await request.send();
+      final responseString = await response.stream.bytesToString();
+      print("API Response: $responseString");
 
-      print("API Response: ${response.body}"); // ✅ Debugging
-
-      final responseBody = jsonDecode(response.body);
+      final responseBody = jsonDecode(responseString);
 
       if (response.statusCode == 200 && responseBody['status'] == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Complaint submitted successfully!")),
+          const SnackBar(content: Text("Complaint submitted successfully!")),
         );
         _clearForm();
       } else {
@@ -53,9 +63,9 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
         );
       }
     } catch (e) {
-      print("Error: $e"); // ✅ Debugging
+      print("Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("An error occurred. Please try again.")),
+        const SnackBar(content: Text("An error occurred. Please try again.")),
       );
     }
   }
@@ -77,7 +87,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.red[900],
-        title: Text('Submit a Complaint'),
+        title: const Text('Submit a Complaint'),
         centerTitle: true,
       ),
       body: Padding(
@@ -93,7 +103,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
               const SizedBox(height: 20),
               TextField(
                 controller: _nameController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Name',
                   border: OutlineInputBorder(),
                 ),
@@ -101,7 +111,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
               const SizedBox(height: 15),
               TextField(
                 controller: _houseNumberController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'House Number',
                   border: OutlineInputBorder(),
                 ),
@@ -109,7 +119,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
               const SizedBox(height: 15),
               TextField(
                 controller: _streetController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Street',
                   border: OutlineInputBorder(),
                 ),
@@ -117,7 +127,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
               const SizedBox(height: 15),
               TextField(
                 controller: _subdivisionController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Subdivision',
                   border: OutlineInputBorder(),
                 ),
@@ -125,7 +135,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
               const SizedBox(height: 15),
               DropdownButtonFormField<String>(
                 value: _selectedComplaintType,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Type of Complaint',
                   border: OutlineInputBorder(),
                 ),
@@ -154,7 +164,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
               TextField(
                 controller: _contactNumberController,
                 keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Contact Number',
                   border: OutlineInputBorder(),
                 ),
@@ -163,7 +173,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
               TextField(
                 controller: _narrativeController,
                 maxLines: 5,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Narrative of Events',
                   border: OutlineInputBorder(),
                 ),

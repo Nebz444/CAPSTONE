@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/users_model.dart';
 
-// User Profile Management
 class UserProvider with ChangeNotifier {
   User? _user;
 
@@ -10,21 +9,18 @@ class UserProvider with ChangeNotifier {
 
   Future<void> setUser(User user) async {
     _user = user;
-
-    // Save user profile details in SharedPreferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profileImage', user.profileImage ?? '');
+    await prefs.setInt('user_id', user.id ?? 0);
     await prefs.setString('username', user.username);
-
+    await prefs.setString('email', user.email ?? '');
+    await prefs.setString('profileImage', user.profileImage ?? '');
     notifyListeners();
   }
 
   Future<void> updateProfileImage(String imageUrl) async {
     if (_user != null) {
-      _user = User(username: _user!.username, profileImage: imageUrl); // New instance
+      _user = _user!.copyWith(profileImage: imageUrl);
       notifyListeners();
-
-      // Save updated profile image in SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('profileImage', imageUrl);
     }
@@ -32,28 +28,30 @@ class UserProvider with ChangeNotifier {
 
   Future<void> loadUserProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? imageUrl = prefs.getString('profileImage');
+    int? userId = prefs.getInt('user_id');
     String? username = prefs.getString('username');
+    String? email = prefs.getString('email');
+    String? profileImage = prefs.getString('profileImage');
 
-    if (_user == null && username != null) {
-      _user = User(username: username, profileImage: imageUrl);
+    if (userId != null && username != null) {
+      _user = User(
+        id: userId,
+        username: username,
+        email: email,
+        profileImage: profileImage,
+      );
+      notifyListeners();
     }
-
-    notifyListeners();
   }
 
   Future<void> clearUser() async {
     _user = null;
     notifyListeners();
-
-    // Remove user data from SharedPreferences on logout
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('profileImage');
-    await prefs.remove('username');
+    await prefs.clear();
   }
 }
 
-// User Authentication State
 class LoggedProvider with ChangeNotifier {
   bool _isLoggedIn = false;
 
@@ -68,7 +66,6 @@ class LoggedProvider with ChangeNotifier {
   Future<void> login() async {
     _isLoggedIn = true;
     notifyListeners();
-
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', true);
   }
@@ -76,7 +73,6 @@ class LoggedProvider with ChangeNotifier {
   Future<void> logout() async {
     _isLoggedIn = false;
     notifyListeners();
-
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false);
   }

@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert'; // For encoding JSON
+import 'package:provider/provider.dart';
+import '../model/users_model.dart'; // Ensure this import path is correct
+import '../provider/user_provider.dart'; // Ensure this import path is correct
 
 class BarangayCertificateForm extends StatefulWidget {
   final String formType;
@@ -13,34 +16,97 @@ class BarangayCertificateForm extends StatefulWidget {
 
 class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
   final _formKey = GlobalKey<FormState>();
+  final _fullNameController = TextEditingController();
+  final _ageController = TextEditingController();
+  final _birthdayController = TextEditingController();
+  final _birthplaceController = TextEditingController();
+  final _houseNumberController = TextEditingController();
+  final _streetController = TextEditingController();
+  final _subdivisionController = TextEditingController();
+  final _yearsResidedController = TextEditingController();
+  final _otherPurposeController = TextEditingController();
 
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
-  final TextEditingController _birthdayController = TextEditingController();
-  final TextEditingController _birthplaceController = TextEditingController();
-  final TextEditingController _houseNumberController = TextEditingController();
-  final TextEditingController _streetController = TextEditingController();
-  final TextEditingController _subdivisionController = TextEditingController();
-  final TextEditingController _yearsResidedController = TextEditingController();
-  final TextEditingController _otherPurposeController = TextEditingController(); // Controller for "Other" purpose
+  String? _selectedPurpose = 'Local Employment';
+  bool _showOtherPurposeField = false;
 
-  String? _selectedPurpose = 'Local Employment'; // Default value
-  bool _showOtherPurposeField = false; // Track if "Other" is selected
-
-  int? parseInt(String value) => int.tryParse(value);
+  User? user;
 
   @override
-  void dispose() {
-    _fullNameController.dispose();
-    _ageController.dispose();
-    _birthdayController.dispose();
-    _birthplaceController.dispose();
-    _houseNumberController.dispose();
-    _streetController.dispose();
-    _subdivisionController.dispose();
-    _yearsResidedController.dispose();
-    _otherPurposeController.dispose(); // Dispose of the "Other" controller
-    super.dispose();
+  void initState() {
+    super.initState();
+    fetchUserDetails();
+  }
+
+  Future<void> fetchUserDetails() async {
+    user = Provider.of<UserProvider>(context, listen: false).user;
+  }
+
+  Future<void> submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      const apiUrl = 'https://baranguard.shop/API/barangay_certificate.php';
+
+      // Prepare form data
+      final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      request.fields['name'] = _fullNameController.text.trim();
+      request.fields['age'] = _ageController.text.trim();
+      request.fields['birthday'] = _birthdayController.text.trim();
+      request.fields['bplace'] = _birthplaceController.text.trim();
+      request.fields['housenum'] = _houseNumberController.text.trim();
+      request.fields['street'] = _streetController.text.trim();
+      request.fields['subdivision'] = _subdivisionController.text.trim().isEmpty
+          ? 'N/A'
+          : _subdivisionController.text.trim();
+      request.fields['years'] = _yearsResidedController.text.trim();
+      request.fields['usertype'] = _selectedPurpose ?? '';
+      request.fields['user_id'] = user!.id.toString();
+
+      if (_showOtherPurposeField) {
+        request.fields['otherInput'] = _otherPurposeController.text.trim();
+      }
+
+      // Debug: Print the request payload
+      print("Request Payload: ${request.fields}");
+
+      try {
+        final response = await request.send();
+        final responseString = await response.stream.bytesToString();
+        print("API Response: $responseString");
+
+        final responseBody = jsonDecode(responseString);
+
+        if (response.statusCode == 200 && responseBody['status'] == 'success') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Certificate request submitted successfully!")),
+          );
+          _clearForm();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseBody['message'] ?? "Failed to submit request.")),
+          );
+        }
+      } catch (e) {
+        print("Error: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("An error occurred. Please try again.")),
+        );
+      }
+    }
+  }
+
+  void _clearForm() {
+    _fullNameController.clear();
+    _ageController.clear();
+    _birthdayController.clear();
+    _birthplaceController.clear();
+    _houseNumberController.clear();
+    _streetController.clear();
+    _subdivisionController.clear();
+    _yearsResidedController.clear();
+    _otherPurposeController.clear();
+    setState(() {
+      _selectedPurpose = 'Local Employment';
+      _showOtherPurposeField = false;
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -53,113 +119,9 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
 
     if (pickedDate != null) {
       setState(() {
-        // Format the date manually
         _birthdayController.text =
-        "${pickedDate.year}-${pickedDate.month.toString().padLeft(
-            2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+        "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
       });
-    }
-  }
-
-  //Confirmation
-  Future<void> confirmSubmission() async {
-    // Show the confirmation dialog to the user
-    bool? confirm = await showDialog(
-      context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text("Confirm Submission"),
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  Text("Name: ${_fullNameController.text}"),
-                  Text("Age: ${_ageController.text}"),
-                  Text("Birthday: ${_birthdayController.text}"),
-                  Text("Birthplace: ${_birthplaceController.text}"),
-                  Text("House Number: ${_houseNumberController.text}"),
-                  Text("Street: ${_streetController.text}"),
-                  Text("Subdivision: ${_subdivisionController.text.isEmpty
-                      ? 'N/A'
-                      : _subdivisionController.text}"),
-                  Text("Years Resided: ${_yearsResidedController.text}"),
-                  Text("Purpose: ${_selectedPurpose == 'Other'
-                      ? _otherPurposeController.text
-                      : _selectedPurpose}"),
-                ],
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text("Edit"),
-                onPressed: () => Navigator.of(context).pop(
-                    false), // Close dialog and allow editing
-              ),
-              TextButton(
-                child: const Text("Confirm"),
-                onPressed: () => Navigator.of(context).pop(
-                    true), // Close dialog and proceed with submission
-              ),
-            ],
-          ),
-    );
-
-    if (confirm == true) {
-      await submitForm();
-    }
-  }
-  //
-
-  Future<void> submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      final apiUrl = 'https://baranguard.shop/API/barangay_certificate.php';
-
-      // Prepare form data with conditional inclusion of otherInput
-      final formData = {
-        'submit': '1', // Set submit to '1' for the API
-        'name': _fullNameController.text,
-        'age': parseInt(_ageController.text)?.toString() ?? '',
-        'birthday': _birthdayController.text,
-        'bplace': _birthplaceController.text,
-        'housenum': _houseNumberController.text,
-        'street': _streetController.text,
-        'subdivision': _subdivisionController.text.isEmpty
-            ? 'N/A'
-            : _subdivisionController.text,
-        'years': parseInt(_yearsResidedController.text)?.toString() ?? '',
-        'usertype': _selectedPurpose,
-      };
-
-      // Conditionally add the 'otherInput' if "Other" is selected
-      if (_showOtherPurposeField) {
-        formData['otherInput'] = _otherPurposeController.text;
-      }
-
-      try {
-        final response = await http.post(
-          Uri.parse(apiUrl),
-          headers: {"Content-Type": "application/x-www-form-urlencoded"},
-          body: formData,
-        );
-
-        // Log response status and body for debugging
-        print('Response status: ${response.statusCode}');
-        print('Response body: ${response.body}');
-
-        if (response.statusCode == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Form submitted successfully')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to submit form. Please try again.')),
-          );
-        }
-      } catch (e) {
-        print('Error: $e'); // Print error to console
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
     }
   }
 
@@ -179,83 +141,107 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Text(
+                  'Please fill out the form below:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
                 TextFormField(
                   controller: _fullNameController,
-                  decoration: InputDecoration(
-                      labelText: 'Full Name', border: OutlineInputBorder()),
-                  validator: (value) =>
-                  value!.isEmpty
-                      ? 'Please enter your full name'
-                      : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Full Name',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your full name';
+                    }
+                    return null;
+                  },
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 TextFormField(
                   controller: _ageController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                      labelText: 'Age', border: OutlineInputBorder()),
-                  validator: (value) =>
-                  parseInt(value!) == null
-                      ? 'Enter a valid age'
-                      : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Age',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your age';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 TextFormField(
                   controller: _birthdayController,
                   decoration: InputDecoration(
                     labelText: 'Birthday',
                     border: OutlineInputBorder(),
                     suffixIcon: IconButton(
-                      icon: Icon(Icons.calendar_today),
+                      icon: const Icon(Icons.calendar_today),
                       onPressed: () => _selectDate(context),
                     ),
                   ),
                   readOnly: true,
-                  validator: (value) =>
-                  value!.isEmpty
-                      ? 'Please select your birthday'
-                      : null,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select your birthday';
+                    }
+                    return null;
+                  },
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 TextFormField(
                   controller: _birthplaceController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Birthplace',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                  value!.isEmpty
-                      ? 'Please enter your birthplace'
-                      : null,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your birthplace';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _houseNumberController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'House Number',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                  value!.isEmpty
-                      ? 'Please enter house number'
-                      : null,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your house number';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _streetController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Street',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                  value!.isEmpty
-                      ? 'Please enter street name'
-                      : null,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your street';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _subdivisionController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Subdivision (if any)',
                     border: OutlineInputBorder(),
                   ),
@@ -264,19 +250,24 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                 TextFormField(
                   controller: _yearsResidedController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Years Resided at Address',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                  parseInt(value!) == null
-                      ? 'Enter valid years'
-                      : null,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the number of years resided';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 15),
                 DropdownButtonFormField<String>(
                   value: _selectedPurpose,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Purpose of Certification',
                     border: OutlineInputBorder(),
                   ),
@@ -289,18 +280,23 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                     'Senior Citizen',
                     'SSS',
                     'Other'
-                  ]
-                      .map((purpose) =>
-                      DropdownMenuItem(
-                        value: purpose,
-                        child: Text(purpose),
-                      ))
-                      .toList(),
+                  ].map((purpose) {
+                    return DropdownMenuItem(
+                      value: purpose,
+                      child: Text(purpose),
+                    );
+                  }).toList(),
                   onChanged: (newValue) {
                     setState(() {
                       _selectedPurpose = newValue;
                       _showOtherPurposeField = newValue == 'Other';
                     });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a purpose';
+                    }
+                    return null;
                   },
                 ),
                 if (_showOtherPurposeField)
@@ -308,14 +304,16 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                     padding: const EdgeInsets.only(top: 15.0),
                     child: TextFormField(
                       controller: _otherPurposeController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Please specify other purpose',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) =>
-                      value!.isEmpty
-                          ? 'Please specify the purpose'
-                          : null,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please specify the purpose';
+                        }
+                        return null;
+                      },
                     ),
                   ),
                 const SizedBox(height: 20),
@@ -323,10 +321,9 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red[900],
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 15, horizontal: 30),
+                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                     ),
-                    onPressed: confirmSubmission, // Call confirmSubmission here
+                    onPressed: submitForm,
                     child: const Text(
                       'Submit',
                       style: TextStyle(fontSize: 18, color: Colors.white),

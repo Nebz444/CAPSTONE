@@ -17,11 +17,6 @@ class LoginController {
   }
 
   // Clear user session (for logout)
-  Future<void> _clearUserSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user_id');
-    await prefs.remove('username');
-  }
 
   // Check if user is already logged in
   Future<bool> isUserLoggedIn() async {
