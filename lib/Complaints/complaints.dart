@@ -17,9 +17,11 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
   final _subdivisionController = TextEditingController();
   final _contactNumberController = TextEditingController();
   final _narrativeController = TextEditingController();
+  final _otherComplaintController = TextEditingController(); // Controller for "Other" complaint type
   User? user;
 
   String? _selectedComplaintType;
+  bool _showOtherComplaintField = false; // Track if "Other" is selected
 
   @override
   void initState() {
@@ -34,16 +36,21 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
   Future<void> submitComplaint() async {
     const apiUrl = 'https://baranguard.shop/API/complaintsdb.php';
 
+    // Determine complaint type and set otherInput if necessary
+    String complaintType = _selectedComplaintType == 'Other' ? _otherComplaintController.text : _selectedComplaintType ?? '';
+    String? otherInput = _selectedComplaintType == 'Other' ? _otherComplaintController.text : null;
+
     // Prepare form data
     final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
     request.fields['full_name'] = _nameController.text.trim();
     request.fields['house_number'] = _houseNumberController.text.trim();
     request.fields['street'] = _streetController.text.trim();
     request.fields['subdivision'] = _subdivisionController.text.trim();
-    request.fields['complaint_type'] = _selectedComplaintType ?? '';
+    request.fields['complaint_type'] = complaintType;
     request.fields['contact_number'] = _contactNumberController.text.trim();
     request.fields['statement'] = _narrativeController.text.trim();
     request.fields['user_id'] = user!.id.toString(); // Include the user_id
+    if (otherInput != null) request.fields['otherInput'] = otherInput; // Include "Other" input if applicable
 
     try {
       final response = await request.send();
@@ -77,8 +84,10 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
     _subdivisionController.clear();
     _contactNumberController.clear();
     _narrativeController.clear();
+    _otherComplaintController.clear();
     setState(() {
       _selectedComplaintType = null;
+      _showOtherComplaintField = false;
     });
   }
 
@@ -147,7 +156,8 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
                   'Vandalism',
                   'Trespassing',
                   'Boundary Disputes',
-                  'Domestic Disputes'
+                  'Domestic Disputes',
+                  'Other', // Add "Other" option
                 ].map((type) {
                   return DropdownMenuItem(
                     value: type,
@@ -157,9 +167,21 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
                 onChanged: (newValue) {
                   setState(() {
                     _selectedComplaintType = newValue;
+                    _showOtherComplaintField = newValue == 'Other'; // Show "Other" field if "Other" is selected
                   });
                 },
               ),
+              if (_showOtherComplaintField)
+                Padding(
+                  padding: const EdgeInsets.only(top: 15.0),
+                  child: TextField(
+                    controller: _otherComplaintController,
+                    decoration: const InputDecoration(
+                      labelText: 'Please specify other complaint type',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 15),
               TextField(
                 controller: _contactNumberController,
