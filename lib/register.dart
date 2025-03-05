@@ -23,6 +23,9 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
   final TextEditingController _homeAddressController = TextEditingController();
   DateTime? _selectedBirthday;
   bool _isLoading = false; // Track loading state
+  String? _selectedGender; // Track selected gender
+  bool _obscurePassword = true; // Track password visibility
+  bool _obscureConfirmPassword = true; // Track confirm password visibility
 
   void _signUp() async {
     if (_isLoading) return; // Prevent multiple clicks
@@ -42,6 +45,7 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
     String mobileNumber = _mobileNumberController.text.trim();
     String email = _emailController.text.trim();
     String homeAddress = _homeAddressController.text.trim();
+    String gender = _selectedGender ?? '';
 
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -54,7 +58,7 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
     }
 
     if (firstName.isEmpty || lastName.isEmpty || username.isEmpty || password.isEmpty ||
-        mobileNumber.isEmpty || email.isEmpty || homeAddress.isEmpty) {
+        mobileNumber.isEmpty || email.isEmpty || homeAddress.isEmpty || gender.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("All required fields must be filled.")),
       );
@@ -80,6 +84,7 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
           'mobile_number': mobileNumber,
           'email_address': email,
           'home_address': homeAddress,
+          'gender': gender,
         }),
       );
 
@@ -193,7 +198,39 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
                         const SizedBox(height: 20),
                         _buildTextField(controller: _firstNameController, label: 'First Name:'),
                         _buildTextField(controller: _lastNameController, label: 'Last Name:'),
-                        _buildTextField(controller: _middleNameController, label: 'Middle Name: (Optional)'),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(controller: _middleNameController, label: 'Middle Name:'),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: _selectedGender,
+                                decoration: InputDecoration(
+                                  labelText: 'Gender',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                items: ['Male', 'Female'].map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedGender = value;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                         Row(
                           children: [
                             Expanded(child: _buildTextField(controller: _suffixController, label: 'Suffix:')),
@@ -228,8 +265,16 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
                         _buildMultilineTextField(controller: _homeAddressController, label: 'Complete Address:'),
                         const SizedBox(height: 20),
                         _buildTextField(controller: _usernameController, label: 'Username:'),
-                        _buildTextField(controller: _passwordController, label: 'Password:', obscureText: true),
-                        _buildTextField(controller: _confirmPasswordController, label: 'Confirm Password:', obscureText: true),
+                        _buildPasswordField(controller: _passwordController, label: 'Password:', obscureText: _obscurePassword, toggleVisibility: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        }),
+                        _buildPasswordField(controller: _confirmPasswordController, label: 'Confirm Password:', obscureText: _obscureConfirmPassword, toggleVisibility: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        }),
                         const SizedBox(height: 20),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -279,6 +324,29 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField({required TextEditingController controller, required String label, required bool obscureText, required VoidCallback toggleVisibility}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          suffixIcon: IconButton(
+            icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility),
+            onPressed: toggleVisibility,
           ),
         ),
       ),

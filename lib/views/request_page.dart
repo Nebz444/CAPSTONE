@@ -10,8 +10,8 @@ class RequestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.red[900], // Matching the color scheme
-        title: const Text('Request'),
+        backgroundColor: const Color(0xFF0D2D56), // Dark blue matching the design
+        title: const Text('Request', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
       body: Padding(
@@ -38,7 +38,7 @@ class RequestPage extends StatelessWidget {
   Widget buildRequestButton(BuildContext context, String title, Widget? formPage) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFD9C9A1), // Beige color matching design
+        backgroundColor: const Color(0xFF174A7C), // Lighter blue matching the design
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
@@ -57,7 +57,7 @@ class RequestPage extends StatelessWidget {
       },
       child: Text(
         title,
-        style: const TextStyle(fontSize: 20, color: Colors.black),
+        style: const TextStyle(fontSize: 20, color: Colors.white), // White text for better contrast
       ),
     );
   }

@@ -44,25 +44,20 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
       // Attempt login
       bool success = await _loginController.login(user);
 
-      if (success = true) {
-        debugPrint('Received Request');
-      }
-
       if (success) {
         // Fetch current user data
         User? currentUser = await _loginController.getUser(username);
-        debugPrint("Abot dito");
 
         if (currentUser != null) {
           // Save user data to the provider
-          Provider.of<UserProvider>(context, listen: false)
-              .setUser(currentUser);
-          debugPrint("success");
+          Provider.of<UserProvider>(context, listen: false).setUser(currentUser);
+          debugPrint("Login successful");
+
           // Navigate to the dashboard
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-              builder: (context) => BaranguardDashboard (),
+              builder: (context) => const BaranguardDashboard(),
             ),
                 (route) => false,
           );
@@ -70,6 +65,7 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
           _showSnackbar('Error: Unable to fetch user details.');
         }
       } else {
+        _showSnackbar('Error: Invalid username or password.');
       }
     } catch (e) {
       _showSnackbar('Error: Something went wrong. Please try again later.');
@@ -233,7 +229,7 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
                   padding: const EdgeInsets.symmetric(vertical: 20), // Consistent button height
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(_createRoute(BarangayRegistration())); // Use custom animation
+                  Navigator.of(context).push(_createRoute(const BarangayRegistration())); // Use custom animation
                 },
                 child: const Text(
                   'Register',
@@ -298,7 +294,7 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
             child: TextButton(
               onPressed: () {
                 // Navigate to RequestOTPScreen with animation
-                Navigator.of(context).push(_createRoute(RequestOTPScreen()));
+                Navigator.of(context).push(_createRoute(const RequestOTPScreen()));
               },
               child: const Text(
                 'Forgot Password?',

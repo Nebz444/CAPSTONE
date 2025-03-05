@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:baranguard/views/account_settings_page.dart';
+import 'package:baranguard/views/change_password_page.dart'; // Import the new ChangePasswordPage
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -66,7 +67,10 @@ class _SettingsPageState extends State<SettingsPage> {
               title: 'Change Password',
               icon: Icons.lock,
               onTap: () {
-                // Navigate to Change Password Page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChangePasswordPage()),
+                );
               },
             ),
             const SizedBox(height: 20),

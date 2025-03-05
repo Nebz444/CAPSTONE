@@ -10,6 +10,8 @@ import '../model/users_model.dart';
 import '../provider/user_provider.dart';
 
 class ReportPage extends StatefulWidget {
+  const ReportPage({super.key});
+
   @override
   _ReportPageState createState() => _ReportPageState();
 }
@@ -28,7 +30,6 @@ class _ReportPageState extends State<ReportPage> {
     fetchUserDetails();
   }
 
-  //nonsense pero
   Future<void> fetchUserDetails() async {
     user = Provider.of<UserProvider>(context, listen: false).user;
   }
@@ -74,12 +75,40 @@ class _ReportPageState extends State<ReportPage> {
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedImage = await picker.pickImage(source: ImageSource.camera);
-    if (pickedImage != null) {
-      setState(() {
-        _imageFile = pickedImage;
-      });
+
+    // Show a dialog to choose between camera and gallery
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Image Source'),
+        content: const Text('Choose the source of the image:'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, ImageSource.camera),
+            child: const Text('Camera'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+            child: const Text('Gallery'),
+          ),
+        ],
+      ),
+    );
+
+    if (source != null) {
+      final XFile? pickedImage = await picker.pickImage(source: source);
+      if (pickedImage != null) {
+        setState(() {
+          _imageFile = pickedImage;
+        });
+      }
     }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _imageFile = null; // Clear the selected image
+    });
   }
 
   Future<void> _confirmAndSubmitReport() async {
@@ -102,24 +131,30 @@ class _ReportPageState extends State<ReportPage> {
       return;
     }
 
+    // Show confirmation dialog
     bool? confirm = await showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Report Submission'),
-          content: const Text('Do you want to submit the report?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Submit'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Report Submission'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: [
+              Text('Note: $note'),
+              const Text('Photo: Attached'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Edit'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
     );
 
     if (confirm == true) {
@@ -140,6 +175,7 @@ class _ReportPageState extends State<ReportPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Report submitted successfully!')),
           );
+          _clearForm();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to submit the report.')),
@@ -151,6 +187,13 @@ class _ReportPageState extends State<ReportPage> {
         );
       }
     }
+  }
+
+  void _clearForm() {
+    _noteController.clear();
+    setState(() {
+      _imageFile = null; // Clear the selected image
+    });
   }
 
   @override
@@ -170,14 +213,14 @@ class _ReportPageState extends State<ReportPage> {
           ],
         ),
       )
-          : SingleChildScrollView( // ✅ Prevent Overflow
+          : SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               AspectRatio(
-                aspectRatio: 16 / 9, // ✅ Map scales properly
+                aspectRatio: 16 / 9,
                 child: FlutterMap(
                   options: MapOptions(
                     center: _currentLocation,
@@ -186,7 +229,7 @@ class _ReportPageState extends State<ReportPage> {
                   children: [
                     TileLayer(
                       urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      subdomains: ['a', 'b', 'c'],
+                      subdomains: const ['a', 'b', 'c'],
                       userAgentPackageName: 'com.example.yourapp',
                     ),
                     MarkerLayer(
@@ -234,14 +277,37 @@ class _ReportPageState extends State<ReportPage> {
               if (_imageFile != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
-                  child: ClipRRect( // ✅ Prevents overflow
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(_imageFile!.path),
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      height: MediaQuery.of(context).size.height * 0.3, // ✅ Responsive height
-                    ),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(_imageFile!.path),
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          height: MediaQuery.of(context).size.height * 0.3,
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: _removeImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               const SizedBox(height: 16),

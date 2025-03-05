@@ -32,6 +32,7 @@ class _BarangayIDState extends State<BarangayID> {
   String? _selectedCivilStatus = 'Single';
 
   User? user;
+  bool _isLoading = false; // Track loading state
 
   @override
   void initState() {
@@ -41,6 +42,53 @@ class _BarangayIDState extends State<BarangayID> {
 
   Future<void> fetchUserDetails() async {
     user = Provider.of<UserProvider>(context, listen: false).user;
+  }
+
+  Future<void> confirmSubmission() async {
+    if (_isLoading) return; // Prevent multiple submissions
+
+    // Show the confirmation dialog to the user
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+          title: const Text("Confirm Submission"),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text("Full Name: ${_fullNameController.text}"),
+                Text("House Number: ${_houseNumberController.text}"),
+                Text("Street: ${_streetController.text}"),
+                Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
+                Text("Age: ${_ageController.text}"),
+                Text("Birthday: ${_birthdayController.text}"),
+                Text("Birthplace: ${_birthplaceController.text}"),
+                Text("Gender: $_selectedGender"),
+                Text("Civil Status: $_selectedCivilStatus"),
+                Text("Height: ${_heightController.text} cm"),
+                Text("Weight: ${_weightController.text} kg"),
+                Text("Contact Number: ${_contactNumberController.text}"),
+                Text("Emergency Contact: ${_emergencyNumberController.text}"),
+              ],
+            ),
+          ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("Edit"),
+            onPressed: () => Navigator.of(context).pop(false), // Close dialog and allow editing
+          ),
+          TextButton(
+            child: const Text("Confirm"),
+            onPressed: () => Navigator.of(context).pop(true), // Close dialog and proceed with submission
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+    setState(() => _isLoading = true); // Show loading indicator
+    await submitForm();
+    setState(() => _isLoading = false); // Hide loading indicator
+    }
   }
 
   Future<void> submitForm() async {
@@ -141,9 +189,12 @@ class _BarangayIDState extends State<BarangayID> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
+      backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
-        backgroundColor: Colors.red[900],
+        backgroundColor: const Color(0xFF0D2D56),
         title: Text(widget.formType),
         centerTitle: true,
       ),
@@ -155,236 +206,79 @@ class _BarangayIDState extends State<BarangayID> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Please fill out the form below:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D2D56),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    "Barangay ID Form",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your full name';
-                    }
-                    return null;
-                  },
+                buildTextField("Full Name", _fullNameController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("House Number", _houseNumberController)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Street", _streetController)),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _houseNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'House Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your house number';
-                    }
-                    return null;
-                  },
+                buildTextField("Subdivision (if any)", _subdivisionController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _streetController,
-                  decoration: const InputDecoration(
-                    labelText: 'Street',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your street';
-                    }
-                    return null;
-                  },
+                buildTextField("Birthplace", _birthplaceController),
+                Row(
+                  children: [
+                    Expanded(child: buildDropdown("Gender", _selectedGender, ['Male', 'Female'], (newValue) {
+                      setState(() {
+                        _selectedGender = newValue;
+                      });
+                    })),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Anulled'], (newValue) {
+                      setState(() {
+                        _selectedCivilStatus = newValue;
+                      });
+                    })),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _subdivisionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Subdivision (if any)',
-                    border: OutlineInputBorder(),
-                  ),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("Height (cm)", _heightController, keyboardType: TextInputType.number)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Weight (kg)", _weightController, keyboardType: TextInputType.number)),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _ageController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Age',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your age';
-                    }
-                    if (int.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _birthdayController,
-                  decoration: InputDecoration(
-                    labelText: 'Birthday',
-                    border: OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: () => _selectDate(context),
-                    ),
-                  ),
-                  readOnly: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select your birthday';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _birthplaceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Birthplace',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your birthplace';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                DropdownButtonFormField<String>(
-                  value: _selectedGender,
-                  decoration: const InputDecoration(
-                    labelText: 'Gender',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: ['Male', 'Female'].map((gender) {
-                    return DropdownMenuItem(
-                      value: gender,
-                      child: Text(gender),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _selectedGender = newValue;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select your gender';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                DropdownButtonFormField<String>(
-                  value: _selectedCivilStatus,
-                  decoration: const InputDecoration(
-                    labelText: 'Civil Status',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: ['Single', 'Married', 'Widowed', 'Anulled'].map((status) {
-                    return DropdownMenuItem(
-                      value: status,
-                      child: Text(status),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _selectedCivilStatus = newValue;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select your civil status';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _heightController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Height (cm)',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your height';
-                    }
-                    if (double.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _weightController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Weight (kg)',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your weight';
-                    }
-                    if (double.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _contactNumberController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Contact Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your contact number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _emergencyNumberController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Emergency Contact',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your emergency contact number';
-                    }
-                    return null;
-                  },
-                ),
+                buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
+                buildTextField("Emergency Contact", _emergencyNumberController, keyboardType: TextInputType.phone),
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[900],
+                      backgroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                     ),
-                    onPressed: submitForm,
-                    child: const Text(
+                    onPressed: _isLoading ? null : confirmSubmission, // Disable button when loading
+                    child: _isLoading
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : const Text(
                       'Submit',
                       style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
@@ -394,6 +288,88 @@ class _BarangayIDState extends State<BarangayID> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget buildTextField(String label, TextEditingController controller, {TextInputType? keyboardType, bool readOnly = false, VoidCallback? onTap}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          TextFormField(
+            controller: controller,
+            style: const TextStyle(color: Colors.black),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10), // Smaller padding
+              suffixIcon: onTap != null ? IconButton(
+                icon: const Icon(Icons.calendar_today),
+                onPressed: onTap,
+              ) : null,
+            ),
+            keyboardType: keyboardType,
+            readOnly: readOnly,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter $label';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildDropdown(String label, String? value, List<String> items, Function(String?) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          DropdownButtonFormField<String>(
+            value: value,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            ),
+            items: items.map((item) {
+              return DropdownMenuItem(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select $label';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }

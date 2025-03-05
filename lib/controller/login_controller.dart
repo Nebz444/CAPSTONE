@@ -10,13 +10,11 @@ class LoginController {
   final String apiUrl = "https://baranguard.shop/API/dartdb.php";
 
   // Save user session
-  Future<void> _saveUserSession(String userId, String username) async {
+  Future<void> _saveUserSession(int userId, String username) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_id', userId);
+    await prefs.setInt('user_id', userId); // Use setInt for userId
     await prefs.setString('username', username);
   }
-
-  // Clear user session (for logout)
 
   // Check if user is already logged in
   Future<bool> isUserLoggedIn() async {
@@ -41,7 +39,7 @@ class LoginController {
       final Map<String, dynamic> requestBody = {
         "username": user.username,
         "password": user.password,
-        "action": "login"
+        "action": "login" // Add this line
       };
 
       debugPrint("Sending login request: ${jsonEncode(requestBody)}");
@@ -57,10 +55,14 @@ class LoginController {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic>? data = jsonDecode(response.body);
-        if (data != null && data['status'] == 'success') {
-          // Save user session
-          await _saveUserSession(data['user']['user_id'], data['user']['username']);
-          return true;
+        if (data != null) {
+          if (data['status'] == 'success') {
+            // Save user session
+            await _saveUserSession(data['user']['user_id'], data['user']['username']);
+            return true;
+          } else if (data['status'] == 'error') {
+            debugPrint("Login failed: ${data['message']}");
+          }
         }
       }
       return false;
@@ -70,7 +72,6 @@ class LoginController {
       return false;
     }
   }
-
   Future<User?> getUser(String username) async {
     try {
       final Uri url = Uri.parse("$apiUrl?username=${Uri.encodeComponent(username)}&action=getUser");

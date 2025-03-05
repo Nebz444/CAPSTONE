@@ -20,7 +20,7 @@ class _RequestOTPScreenState extends State<RequestOTPScreen>
   late Animation<double> _fadeAnimation;
 
   // API Endpoint
-  final String sendOtpUrl = ("https://baranguard.shop/API/sendotp.php");
+  final String sendOtpUrl = "https://baranguard.shop/API/sendotp.php";
 
   @override
   void initState() {
@@ -51,7 +51,10 @@ class _RequestOTPScreenState extends State<RequestOTPScreen>
       final response = await http.post(
         Uri.parse(sendOtpUrl),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({'email_address': email}),
+        body: jsonEncode({
+          'action': 'send_otp',  // ✅ Added action field
+          'email_address': email,
+        }),
       );
 
       debugPrint('Response Code: ${response.statusCode}');
@@ -97,11 +100,8 @@ class _RequestOTPScreenState extends State<RequestOTPScreen>
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_isLoading,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-      },
+    return WillPopScope(
+      onWillPop: () async => !_isLoading,
       child: Scaffold(
         backgroundColor: const Color(0xFF0D4875),
         body: Center(

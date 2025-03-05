@@ -120,7 +120,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
                     backgroundImage: userProvider.user?.profileImage != null &&
                         userProvider.user!.profileImage!.isNotEmpty
                         ? NetworkImage(userProvider.user!.profileImage!)
-                        : const AssetImage('assets/default_profile.png') as ImageProvider,
+                        : const AssetImage('lib/images/default_profile.png') as ImageProvider,
                   ),
                 );
               },
@@ -158,6 +158,13 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               title: const Text('Reports'),
               onTap: () {
                 Navigator.push(context, RouteUtils.createRoute(ReportFirstPage()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.phone),
+              title: const Text('Contacts'),
+              onTap: () {
+                Navigator.push(context, RouteUtils.createRoute(const ContactPage()));
               },
             ),
             ListTile(

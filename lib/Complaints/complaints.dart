@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../model/users_model.dart'; // Ensure this import path is correct
@@ -22,6 +24,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
 
   String? _selectedComplaintType;
   bool _showOtherComplaintField = false; // Track if "Other" is selected
+  File? _imageFile; // To store the selected/captured image
 
   @override
   void initState() {
@@ -31,6 +34,82 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
 
   Future<void> fetchUserDetails() async {
     user = Provider.of<UserProvider>(context, listen: false).user;
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+
+    // Show a dialog to choose between camera and gallery
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Image Source'),
+        content: const Text('Choose the source of the image:'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, ImageSource.camera),
+            child: const Text('Camera'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+            child: const Text('Gallery'),
+          ),
+        ],
+      ),
+    );
+
+    if (source != null) {
+      final XFile? pickedImage = await picker.pickImage(source: source);
+      if (pickedImage != null) {
+        setState(() {
+          _imageFile = File(pickedImage.path); // Convert XFile to File
+        });
+      }
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _imageFile = null; // Clear the selected image
+    });
+  }
+
+  Future<void> _confirmAndSubmit() async {
+    // Show confirmation dialog
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Submission'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: [
+              Text('Name: ${_nameController.text}'),
+              Text('House Number: ${_houseNumberController.text}'),
+              Text('Street: ${_streetController.text}'),
+              Text('Subdivision: ${_subdivisionController.text}'),
+              Text('Complaint Type: ${_selectedComplaintType == 'Other' ? _otherComplaintController.text : _selectedComplaintType}'),
+              Text('Contact Number: ${_contactNumberController.text}'),
+              Text('Narrative: ${_narrativeController.text}'),
+              if (_imageFile != null) const Text('Photo: Attached'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Edit'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await submitComplaint();
+    }
   }
 
   Future<void> submitComplaint() async {
@@ -51,6 +130,11 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
     request.fields['statement'] = _narrativeController.text.trim();
     request.fields['user_id'] = user!.id.toString(); // Include the user_id
     if (otherInput != null) request.fields['otherInput'] = otherInput; // Include "Other" input if applicable
+
+    // Add the image file if selected
+    if (_imageFile != null) {
+      request.files.add(await http.MultipartFile.fromPath('photo', _imageFile!.path));
+    }
 
     try {
       final response = await request.send();
@@ -88,6 +172,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
     setState(() {
       _selectedComplaintType = null;
       _showOtherComplaintField = false;
+      _imageFile = null; // Clear the selected image
     });
   }
 
@@ -201,13 +286,55 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
                 ),
               ),
               const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Add Photo or Evidence'),
+              ),
+              if (_imageFile != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          _imageFile!,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          height: 200, // Adjust height as needed
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: _removeImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 20),
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red[900],
                     padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                   ),
-                  onPressed: submitComplaint,
+                  onPressed: _confirmAndSubmit,
                   child: const Text(
                     'Submit',
                     style: TextStyle(fontSize: 18, color: Colors.white),

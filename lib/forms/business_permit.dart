@@ -27,6 +27,7 @@ class _BusinessFormState extends State<BusinessForm> {
   final TextEditingController _businessTypeController = TextEditingController();
 
   User? user;
+  bool _isLoading = false; // Track loading state
 
   @override
   void initState() {
@@ -52,6 +53,8 @@ class _BusinessFormState extends State<BusinessForm> {
 
   // Confirmation dialog before submission for business permit form
   Future<void> confirmSubmission() async {
+    if (_isLoading) return; // Prevent multiple submissions
+
     // Show the confirmation dialog to the user
     bool? confirm = await showDialog(
       context: context,
@@ -83,7 +86,9 @@ class _BusinessFormState extends State<BusinessForm> {
     );
 
     if (confirm == true) {
+      setState(() => _isLoading = true); // Show loading indicator
       await submitForm();
+      setState(() => _isLoading = false); // Hide loading indicator
     }
   }
 
@@ -144,10 +149,12 @@ class _BusinessFormState extends State<BusinessForm> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
+      backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
-        backgroundColor: Colors.red[900],
-        title: Text(widget.formType),
+        backgroundColor: const Color(0xFF0D2D56),
         centerTitle: true,
       ),
       body: Padding(
@@ -158,79 +165,50 @@ class _BusinessFormState extends State<BusinessForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Please fill out the form below:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D2D56),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    "Business Permit",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                TextFormField(
-                  controller: _businessNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Business Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                  value!.isEmpty ? 'Please enter the business name' : null,
+                buildTextField("Business Name", _businessNameController),
+                buildTextField("Name of Business Owner", _ownerNameController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("House Number", _houseNumberController)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Street", _streetController)),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _ownerNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name of Business Owner',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                  value!.isEmpty ? 'Please enter the owner\'s name' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _houseNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'House Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                  value!.isEmpty ? 'Please enter house number' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _streetController,
-                  decoration: const InputDecoration(
-                    labelText: 'Street',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                  value!.isEmpty ? 'Please enter street name' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _subdivisionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Subdivision (if any)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _businessTypeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Type of Business',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                  value!.isEmpty ? 'Please enter type of business' : null,
-                ),
+                buildTextField("Subdivision (if any)", _subdivisionController),
+                buildTextField("Type of Business", _businessTypeController),
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[900],
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 15, horizontal: 30),
+                      backgroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                     ),
-                    onPressed: confirmSubmission,
-                    child: const Text(
-                      'Submit',
+                    onPressed: _isLoading ? null : confirmSubmission, // Disable button when loading
+                    child: _isLoading
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : const Text(
+                      'Confirm',
                       style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
                   ),
@@ -239,6 +217,41 @@ class _BusinessFormState extends State<BusinessForm> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget buildTextField(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          TextFormField(
+            controller: controller,
+            style: const TextStyle(color: Colors.black),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10), // Smaller padding
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter $label';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }

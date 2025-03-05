@@ -2,6 +2,7 @@ class User {
   int? id;
   String username;
   String? email;
+  String? gender;
   String? password;
   String? lastName;
   String? firstName;
@@ -21,6 +22,7 @@ class User {
     this.firstName,
     this.middleName,
     this.suffix,
+    this.gender,
     this.birthday,
     this.mobileNumber,
     this.homeAddress,
@@ -38,6 +40,7 @@ class User {
       'first_name': firstName,
       'middle_name': middleName,
       'suffix': suffix,
+      'gender':gender,
       'birthday': birthday?.toIso8601String(), // Serialize DateTime as ISO8601 string
       'mobile_number': mobileNumber,
       'home_address': homeAddress,
@@ -56,6 +59,7 @@ class User {
       firstName: json['first_name'] as String?,
       middleName: json['middle_name'] as String?,
       suffix: json['suffix'] as String?,
+      gender: json['gender'] as String?,
       birthday: json['birthday'] != null
           ? DateTime.parse(json['birthday'] as String)
           : null,
@@ -75,6 +79,7 @@ class User {
     String? firstName,
     String? middleName,
     String? suffix,
+    String? gender,
     DateTime? birthday,
     String? mobileNumber,
     String? homeAddress,
@@ -89,6 +94,7 @@ class User {
       firstName: firstName ?? this.firstName,
       middleName: middleName ?? this.middleName,
       suffix: suffix ?? this.suffix,
+      gender: gender ?? this.gender,
       birthday: birthday ?? this.birthday,
       mobileNumber: mobileNumber ?? this.mobileNumber,
       homeAddress: homeAddress ?? this.homeAddress,

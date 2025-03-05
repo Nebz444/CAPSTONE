@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/users_model.dart';
@@ -56,12 +57,15 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
+      print("Image picked: ${pickedFile.path}"); // Debugging
       File imageFile = File(pickedFile.path);
+      checkFileType(imageFile);
       String? uploadedImageUrl = await _uploadProfileImage(imageFile);
 
       if (uploadedImageUrl != null) {
         setState(() {
           _profileImage = imageFile;
+          user!.profileImage = uploadedImageUrl;
         });
 
         // Update the UserProvider with the new profile image
@@ -70,35 +74,71 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         // Save the new profile image URL to SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('profileImage', uploadedImageUrl);
+
+        print("Profile image updated and saved to SharedPreferences: $uploadedImageUrl");
+      } else {
+        print("Failed to upload profile image."); // Debugging
       }
+    } else {
+      print("No image selected."); // Debugging
     }
+  }
+
+  void checkFileType(File imageFile) {
+    final mimeType = lookupMimeType(imageFile.path);
+    print("Detected MIME type: $mimeType");
   }
 
   Future<String?> _uploadProfileImage(File imageFile) async {
     try {
+      // Print debug information
+      print("Image picked: ${imageFile.path}");
+      print("Sending request with user_id: ${user!.id} and action: upload_profile_picture");
+
+      // Create the multipart request
       var request = http.MultipartRequest(
         'POST',
         Uri.parse('https://baranguard.shop/API/dartdb.php'), // Correct API URL
       );
 
-      request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+      // Add the image file to the request
+      request.files.add(await http.MultipartFile.fromPath(
+        'image', // Ensure this matches the server's expected field name
+        imageFile.path,
+      ));
+
+      // Add additional fields
       request.fields['user_id'] = user!.id.toString();
-      request.fields['action'] = 'upload_profile_picture'; // Correct action name
+      request.fields['action'] = 'upload_profile_picture'; // Ensure this matches the server's expected action
 
+      // Print the request fields for debugging
+      print("Request fields: ${request.fields}");
+
+      // Send the request
       var response = await request.send();
-      var responseData = await response.stream.bytesToString();
 
+      // Get the response data
+      var responseData = await response.stream.bytesToString();
       print("Upload Response: $responseData"); // Debugging
 
+      // Parse the JSON response
       var jsonResponse = json.decode(responseData);
+
+      // Check if the upload was successful
       if (jsonResponse['status'] == 'success') {
         print("Uploaded Image URL: ${jsonResponse['profile_image_path']}"); // Log success
         return jsonResponse['profile_image_path'];
       } else {
         print("Error: ${jsonResponse['message']}"); // Log error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to upload image: ${jsonResponse['message']}")),
+        );
       }
     } catch (e) {
       print("Exception: $e"); // Log any exceptions
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("An error occurred: $e")),
+      );
     }
     return null;
   }
@@ -127,7 +167,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                     ? FileImage(_profileImage!) as ImageProvider
                     : user?.profileImage != null
                     ? NetworkImage(user!.profileImage!)
-                    : const AssetImage('assets/default_profile.png'),
+                    : const AssetImage('lib/images/default_profile.png'),
                 child: _profileImage == null && user?.profileImage == null
                     ? const Icon(
                   Icons.camera_alt,

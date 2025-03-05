@@ -343,7 +343,6 @@ class _CedulaFormState extends State<CedulaForm> {
                 const SizedBox(height: 15),
                 TextFormField(
                   controller: _emergencyNumberController,
-                  keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
                     labelText: 'In case of Emergency',
                     border: OutlineInputBorder(),

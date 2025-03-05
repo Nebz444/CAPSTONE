@@ -30,6 +30,7 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
   bool _showOtherPurposeField = false;
 
   User? user;
+  bool _isLoading = false; // Track loading state
 
   @override
   void initState() {
@@ -39,6 +40,51 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
 
   Future<void> fetchUserDetails() async {
     user = Provider.of<UserProvider>(context, listen: false).user;
+  }
+
+  Future<void> confirmSubmission() async {
+    if (_isLoading) return; // Prevent multiple submissions
+
+    // Show the confirmation dialog to the user
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Submission"),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text("Full Name: ${_fullNameController.text}"),
+              Text("Age: ${_ageController.text}"),
+              Text("Birthday: ${_birthdayController.text}"),
+              Text("Birthplace: ${_birthplaceController.text}"),
+              Text("House Number: ${_houseNumberController.text}"),
+              Text("Street: ${_streetController.text}"),
+              Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
+              Text("Years Resided: ${_yearsResidedController.text}"),
+              Text("Purpose: ${_selectedPurpose == 'Other' ? _otherPurposeController.text : _selectedPurpose}"),
+              if (_selectedPurpose == 'Other')
+                Text("Other Input: ${_otherPurposeController.text}"), // Show "Other" input if applicable
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("Edit"),
+            onPressed: () => Navigator.of(context).pop(false), // Close dialog and allow editing
+          ),
+          TextButton(
+            child: const Text("Confirm"),
+            onPressed: () => Navigator.of(context).pop(true), // Close dialog and proceed with submission
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _isLoading = true); // Show loading indicator
+      await submitForm();
+      setState(() => _isLoading = false); // Hide loading indicator
+    }
   }
 
   Future<void> submitForm() async {
@@ -127,206 +173,110 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600; // Adjust breakpoint as needed
+
     return Scaffold(
+      backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
-        backgroundColor: Colors.red[900],
+        backgroundColor: const Color(0xFF0D2D56),
         title: Text(widget.formType),
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Please fill out the form below:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(isSmallScreen ? 10.0 : 12.0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D2D56),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "Barangay Certificate Form",
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 18 : 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your full name';
-                    }
-                    return null;
-                  },
+                buildTextField("Full Name", _fullNameController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
+                    SizedBox(width: isSmallScreen ? 8 : 10),
+                    Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _ageController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Age',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your age';
-                    }
-                    if (int.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
+                buildTextField("Birthplace", _birthplaceController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("House Number", _houseNumberController)),
+                    SizedBox(width: isSmallScreen ? 8 : 10),
+                    Expanded(child: buildTextField("Street", _streetController)),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _birthdayController,
-                  decoration: InputDecoration(
-                    labelText: 'Birthday',
-                    border: OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: () => _selectDate(context),
+                buildTextField("Subdivision (if any)", _subdivisionController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("Years Resided at Address", _yearsResidedController, keyboardType: TextInputType.number)),
+                    SizedBox(width: isSmallScreen ? 8 : 10),
+                    Expanded(
+                      child: SizedBox(
+                        width: isSmallScreen ? screenWidth * 0.4 : screenWidth * 0.3, // Constrain dropdown width
+                        child: buildDropdown("Purpose of Certification", _selectedPurpose, [
+                          'Local Employment',
+                          'Oversea\'s Employment',
+                          'Water Connection',
+                          'Electric Connection',
+                          'Loan Purposes',
+                          'Senior Citizen',
+                          'SSS',
+                          'Other'
+                        ], (newValue) {
+                          setState(() {
+                            _selectedPurpose = newValue;
+                            _showOtherPurposeField = newValue == 'Other';
+                          });
+                        }),
+                      ),
                     ),
-                  ),
-                  readOnly: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select your birthday';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _birthplaceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Birthplace',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your birthplace';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _houseNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'House Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your house number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _streetController,
-                  decoration: const InputDecoration(
-                    labelText: 'Street',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your street';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _subdivisionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Subdivision (if any)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _yearsResidedController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Years Resided at Address',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the number of years resided';
-                    }
-                    if (int.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                DropdownButtonFormField<String>(
-                  value: _selectedPurpose,
-                  decoration: const InputDecoration(
-                    labelText: 'Purpose of Certification',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    'Local Employment',
-                    'Oversea\'s Employment',
-                    'Water Connection',
-                    'Electric Connection',
-                    'Loan Purposes',
-                    'Senior Citizen',
-                    'SSS',
-                    'Other'
-                  ].map((purpose) {
-                    return DropdownMenuItem(
-                      value: purpose,
-                      child: Text(purpose),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _selectedPurpose = newValue;
-                      _showOtherPurposeField = newValue == 'Other';
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select a purpose';
-                    }
-                    return null;
-                  },
+                  ],
                 ),
                 if (_showOtherPurposeField)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 15.0),
-                    child: TextFormField(
-                      controller: _otherPurposeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Please specify other purpose',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please specify the purpose';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
+                  buildTextField("Please specify other purpose", _otherPurposeController),
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[900],
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                      backgroundColor: Colors.black,
+                      padding: EdgeInsets.symmetric(
+                        vertical: isSmallScreen ? 12 : 15,
+                        horizontal: isSmallScreen ? 20 : 30,
+                      ),
                     ),
-                    onPressed: submitForm,
-                    child: const Text(
+                    onPressed: _isLoading ? null : confirmSubmission, // Disable button when loading
+                    child: _isLoading
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : Text(
                       'Submit',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                      style: TextStyle(fontSize: isSmallScreen ? 16 : 18, color: Colors.white),
                     ),
                   ),
                 ),
@@ -334,6 +284,88 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget buildTextField(String label, TextEditingController controller, {TextInputType? keyboardType, bool readOnly = false, VoidCallback? onTap}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          TextFormField(
+            controller: controller,
+            style: const TextStyle(color: Colors.black),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10), // Smaller padding
+              suffixIcon: onTap != null ? IconButton(
+                icon: const Icon(Icons.calendar_today),
+                onPressed: onTap,
+              ) : null,
+            ),
+            keyboardType: keyboardType,
+            readOnly: readOnly,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter $label';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildDropdown(String label, String? value, List<String> items, Function(String?) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          DropdownButtonFormField<String>(
+            value: value,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            ),
+            items: items.map((item) {
+              return DropdownMenuItem(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select $label';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }

@@ -35,6 +35,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
 
   // User details
   User? user;
+  bool _isLoading = false; // Track loading state
 
   @override
   void initState() {
@@ -79,28 +80,30 @@ class _IndigencyFormState extends State<IndigencyForm> {
 
   // Confirmation dialog before submission
   Future<void> confirmSubmission() async {
+    if (_isLoading) return; // Prevent multiple submissions
+
     // Show the confirmation dialog to the user
     bool? confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Confirm Submission"),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: <Widget>[
-              Text("Manager Name: ${_managerNameController.text}"),
-              Text("Age: ${_ageController.text}"),
-              Text("Birthday: ${_birthdayController.text}"),
-              Text("House Number: ${_houseNumberController.text}"),
-              Text("Street: ${_streetController.text}"),
-              Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
-              Text("Patient Name: ${_patientNameController.text}"),
-              Text("Relation: ${_relationController.text}"),
-              Text("Purpose: ${_selectedPurpose == 'Other' ? _otherPurposeController.text : _selectedPurpose}"),
-              if (_selectedPurpose == 'Other')
-                Text("Other Input: ${_otherPurposeController.text}"), // Show "Other" input if applicable
-            ],
+          title: const Text("Confirm Submission"),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text("Manager Name: ${_managerNameController.text}"),
+                Text("Age: ${_ageController.text}"),
+                Text("Birthday: ${_birthdayController.text}"),
+                Text("House Number: ${_houseNumberController.text}"),
+                Text("Street: ${_streetController.text}"),
+                Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
+                Text("Patient Name: ${_patientNameController.text}"),
+                Text("Relation: ${_relationController.text}"),
+                Text("Purpose: ${_selectedPurpose == 'Other' ? _otherPurposeController.text : _selectedPurpose}"),
+                if (_selectedPurpose == 'Other')
+                  Text("Other Input: ${_otherPurposeController.text}"), // Show "Other" input if applicable
+              ],
+            ),
           ),
-        ),
         actions: <Widget>[
           TextButton(
             child: const Text("Edit"),
@@ -115,7 +118,9 @@ class _IndigencyFormState extends State<IndigencyForm> {
     );
 
     if (confirm == true) {
-      await submitForm();
+    setState(() => _isLoading = true); // Show loading indicator
+    await submitForm();
+    setState(() => _isLoading = false); // Hide loading indicator
     }
   }
 
@@ -188,8 +193,9 @@ class _IndigencyFormState extends State<IndigencyForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
-        backgroundColor: Colors.red[900],
+        backgroundColor: const Color(0xFF0D2D56),
         title: Text(widget.formType),
         centerTitle: true,
       ),
@@ -201,142 +207,79 @@ class _IndigencyFormState extends State<IndigencyForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Please fill out the form below:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D2D56),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    "Indigency Form",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                TextFormField(
-                  controller: _managerNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name of the one who manages',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Please enter the manager\'s name' : null,
+                buildTextField("Name of the one who manages", _managerNameController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _ageController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Age',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => int.tryParse(value!) == null ? 'Enter a valid age' : null,
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("House Number", _houseNumberController)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Street", _streetController)),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _birthdayController,
-                  decoration: InputDecoration(
-                    labelText: 'Birthday',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: () => _selectDate(context),
-                    ),
-                  ),
-                  readOnly: true, // User cannot type directly, only pick date
-                  validator: (value) => value!.isEmpty ? 'Please select your birthday' : null,
+                buildTextField("Subdivision (if any)", _subdivisionController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("Name of the Patient", _patientNameController)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Relation to the Patient", _relationController)),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _houseNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'House Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Please enter house number' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _streetController,
-                  decoration: const InputDecoration(
-                    labelText: 'Street',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Please enter street name' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _subdivisionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Subdivision (if any)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _patientNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name of the Patient',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Please enter the patient\'s name' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _relationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Relation to the Patient',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Please enter your relation to the patient' : null,
-                ),
-                const SizedBox(height: 15),
-                DropdownButtonFormField<String>(
-                  value: _selectedPurpose,
-                  decoration: const InputDecoration(
-                    labelText: 'Purpose',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: [
-                    'Medical and Financial',
-                    'Medical',
-                    'Financial',
-                    'Burial',
-                    'Correction',
-                    'Senior Citizen',
-                    'Public Attorney\'s Office',
-                    'Scholar',
-                    'Other',
-                  ].map((purpose) => DropdownMenuItem(
-                    value: purpose,
-                    child: Text(purpose),
-                  )).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _selectedPurpose = newValue;
-                      _showOtherPurposeField = newValue == 'Other';
-                    });
-                  },
-                ),
+                buildDropdown("Purpose", _selectedPurpose, [
+                  'Medical and Financial',
+                  'Medical',
+                  'Financial',
+                  'Burial',
+                  'Correction',
+                  'Senior Citizen',
+                  'Public Attorney\'s Office',
+                  'Scholar',
+                  'Other',
+                ], (newValue) {
+                  setState(() {
+                    _selectedPurpose = newValue;
+                    _showOtherPurposeField = newValue == 'Other';
+                  });
+                }),
                 if (_showOtherPurposeField)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 15.0),
-                    child: TextFormField(
-                      controller: _otherPurposeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Please specify other purpose',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (_showOtherPurposeField && value!.isEmpty) {
-                          return 'Please specify the purpose';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
+                  buildTextField("Please specify other purpose", _otherPurposeController),
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[900],
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 15, horizontal: 30),
+                      backgroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                     ),
-                    onPressed: confirmSubmission,
-                    child: const Text(
+                    onPressed: _isLoading ? null : confirmSubmission, // Disable button when loading
+                    child: _isLoading
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : const Text(
                       'Submit',
                       style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
@@ -346,6 +289,88 @@ class _IndigencyFormState extends State<IndigencyForm> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget buildTextField(String label, TextEditingController controller, {TextInputType? keyboardType, bool readOnly = false, VoidCallback? onTap}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          TextFormField(
+            controller: controller,
+            style: const TextStyle(color: Colors.black),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10), // Smaller padding
+              suffixIcon: onTap != null ? IconButton(
+                icon: const Icon(Icons.calendar_today),
+                onPressed: onTap,
+              ) : null,
+            ),
+            keyboardType: keyboardType,
+            readOnly: readOnly,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter $label';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildDropdown(String label, String? value, List<String> items, Function(String?) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          DropdownButtonFormField<String>(
+            value: value,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            ),
+            items: items.map((item) {
+              return DropdownMenuItem(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select $label';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }
