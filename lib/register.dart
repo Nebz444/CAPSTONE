@@ -372,3 +372,4 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
     );
   }
 }
+

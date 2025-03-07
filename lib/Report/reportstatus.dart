@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ReportStatusPage extends StatefulWidget {
-  final int userId; // Pass the logged-in user ID
+  final int userId;
 
   ReportStatusPage({required this.userId});
 
@@ -43,7 +43,7 @@ class _ReportStatusPageState extends State<ReportStatusPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF154068),
+      backgroundColor: const Color(0xFF154068), // New background color
       appBar: AppBar(
         title: const Text('Report Status', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF154068),
@@ -51,7 +51,7 @@ class _ReportStatusPageState extends State<ReportStatusPage> {
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20), // Adjusted padding
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
             : reports.isEmpty
@@ -67,20 +67,40 @@ class _ReportStatusPageState extends State<ReportStatusPage> {
   }
 
   Widget _buildReportEntry(dynamic report) {
+    Color statusColor = report['status'] == 'Accepted' ? Colors.green : Colors.orange;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(15), // Adjusted padding
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.grey.shade300,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Status: ${report['status']}", style: TextStyle(fontWeight: FontWeight.bold)),
-          Text("Note: ${report['note']}"),
-          Text("Date: ${report['created_at']}"),
+          Container(
+            width: 12,
+            height: 12,
+            margin: const EdgeInsets.only(top: 5, right: 8),
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  report['status'],
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+                Text("Concern: ${report['note']}", style: const TextStyle(color: Colors.black)),
+                Text("Date: ${report['created_at']}", style: const TextStyle(color: Colors.black)),
+              ],
+            ),
+          ),
         ],
       ),
     );

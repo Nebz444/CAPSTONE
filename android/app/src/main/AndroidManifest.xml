@@ -13,7 +13,7 @@
         android:label="Baranguard"
         android:name="${applicationName}"
         android:usesCleartextTraffic="true"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/playstore">
         <activity
             android:name=".MainActivity"
             android:networkSecurityConfig="@xml/network_security_config"

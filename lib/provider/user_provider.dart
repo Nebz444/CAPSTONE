@@ -17,37 +17,30 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateUserDetails({
-    required String lastName,
-    required String firstName,
-    required String middleName,
-    required String suffix,
-    required String email,
-    required String mobileNumber,
-    required String homeAddress,
-  }) async {
+  void updateUser({
+    String? firstName,
+    String? lastName,
+    String? middleName,
+    String? suffix,
+    String? email,
+    String? mobileNumber,
+    String? homeAddress,
+  }) {
     if (_user != null) {
-      // Update the user object with new details
-      _user = _user!.copyWith(
-        lastName: lastName,
-        firstName: firstName,
-        middleName: middleName,
-        suffix: suffix,
-        email: email,
-        mobileNumber: mobileNumber,
-        homeAddress: homeAddress,
+      _user = User(
+        id: _user!.id,
+        username: _user!.username,
+        firstName: firstName ?? _user!.firstName,
+        lastName: lastName ?? _user!.lastName,
+        middleName: middleName ?? _user!.middleName,
+        suffix: suffix ?? _user!.suffix,
+        email: email ?? _user!.email,
+        mobileNumber: mobileNumber ?? _user!.mobileNumber,
+        homeAddress: homeAddress ?? _user!.homeAddress,
+        birthday: _user!.birthday,
+        gender: _user!.gender,
+        profileImage: _user!.profileImage,
       );
-
-      // Save updated details to SharedPreferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('lastName', lastName);
-      await prefs.setString('firstName', firstName);
-      await prefs.setString('middleName', middleName);
-      await prefs.setString('suffix', suffix);
-      await prefs.setString('email', email);
-      await prefs.setString('mobileNumber', mobileNumber);
-      await prefs.setString('homeAddress', homeAddress);
-
       notifyListeners();
     }
   }

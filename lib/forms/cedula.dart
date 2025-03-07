@@ -8,35 +8,27 @@ import '../provider/user_provider.dart'; // Ensure this import path is correct
 class CedulaForm extends StatefulWidget {
   final String formType;
 
-  const CedulaForm({super.key, required this.formType});
+  const CedulaForm({required this.formType});
 
   @override
   _CedulaFormState createState() => _CedulaFormState();
 }
 
 class _CedulaFormState extends State<CedulaForm> {
-  // Form key for validation
   final _formKey = GlobalKey<FormState>();
+  final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _houseNumberController = TextEditingController();
+  final _streetController = TextEditingController();
+  final _subdivisionController = TextEditingController();
+  final _contactNumberController = TextEditingController();
 
-  // Text controllers for inputs
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _houseNumberController = TextEditingController();
-  final TextEditingController _streetController = TextEditingController();
-  final TextEditingController _subdivisionController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
-  final TextEditingController _birthplaceController = TextEditingController();
-  final TextEditingController _heightController = TextEditingController();
-  final TextEditingController _weightController = TextEditingController();
-  final TextEditingController _contactNumberController = TextEditingController();
-  final TextEditingController _emergencyNumberController = TextEditingController();
-  final TextEditingController _birthdayController = TextEditingController();
+  String? _selectedGender = 'Male';
+  String? _selectedCivilStatus = 'Single';
 
-  // Dropdown selections
-  String? _selectedGender = 'Male'; // Default value
-  String? _selectedCivilStatus = 'Single'; // Default value
-
-  // User details
   User? user;
+  bool _isLoading = false; // Track loading state
 
   @override
   void initState() {
@@ -44,51 +36,13 @@ class _CedulaFormState extends State<CedulaForm> {
     fetchUserDetails();
   }
 
-  // Fetch user details from the provider
   Future<void> fetchUserDetails() async {
     user = Provider.of<UserProvider>(context, listen: false).user;
-    print("Fetched User ID: ${user?.id}"); // Debug print
   }
 
-  // Helper to parse integers and doubles
-  int? parseInt(String value) => int.tryParse(value);
-  double? parseDouble(String value) => double.tryParse(value);
-
-  // Dispose controllers to avoid memory leaks
-  @override
-  void dispose() {
-    _fullNameController.dispose();
-    _houseNumberController.dispose();
-    _streetController.dispose();
-    _subdivisionController.dispose();
-    _ageController.dispose();
-    _birthplaceController.dispose();
-    _heightController.dispose();
-    _weightController.dispose();
-    _contactNumberController.dispose();
-    _emergencyNumberController.dispose();
-    _birthdayController.dispose();
-    super.dispose();
-  }
-
-  // Date picker for birthday
-  Future<void> _selectDate(BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-
-    if (pickedDate != null) {
-      setState(() {
-        _birthdayController.text = "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
-      });
-    }
-  }
-
-  // Confirmation dialog before submission
   Future<void> confirmSubmission() async {
+    if (_isLoading) return; // Prevent multiple submissions
+
     // Show the confirmation dialog to the user
     bool? confirm = await showDialog(
       context: context,
@@ -97,19 +51,15 @@ class _CedulaFormState extends State<CedulaForm> {
         content: SingleChildScrollView(
           child: ListBody(
             children: <Widget>[
-              Text("Full Name: ${_fullNameController.text}"),
-              Text("Age: ${_ageController.text}"),
-              Text("Birthday: ${_birthdayController.text}"),
-              Text("Birthplace: ${_birthplaceController.text}"),
+              Text("First Name: ${_firstNameController.text}"),
+              Text("Middle Name: ${_middleNameController.text}"),
+              Text("Last Name: ${_lastNameController.text}"),
               Text("House Number: ${_houseNumberController.text}"),
               Text("Street: ${_streetController.text}"),
               Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
               Text("Gender: $_selectedGender"),
               Text("Civil Status: $_selectedCivilStatus"),
-              Text("Height: ${_heightController.text} cm"),
-              Text("Weight: ${_weightController.text} kg"),
               Text("Contact Number: ${_contactNumberController.text}"),
-              Text("Emergency Contact: ${_emergencyNumberController.text}"),
             ],
           ),
         ),
@@ -127,47 +77,50 @@ class _CedulaFormState extends State<CedulaForm> {
     );
 
     if (confirm == true) {
+      setState(() => _isLoading = true); // Show loading indicator
       await submitForm();
+      setState(() => _isLoading = false); // Hide loading indicator
     }
   }
 
-  // Form submission function
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
       const apiUrl = 'https://baranguard.shop/API/cedula.php';
 
-      // Prepare form data
-      final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-      request.fields['full_name'] = _fullNameController.text.trim();
-      request.fields['house_number'] = _houseNumberController.text.trim();
-      request.fields['street'] = _streetController.text.trim();
-      request.fields['subdivision'] = _subdivisionController.text.trim().isEmpty
-          ? 'N/A'
-          : _subdivisionController.text.trim();
-      request.fields['age'] = _ageController.text.trim();
-      request.fields['gender'] = _selectedGender ?? 'Male';
-      request.fields['civil_status'] = _selectedCivilStatus ?? 'Single';
-      request.fields['birthplace'] = _birthplaceController.text.trim();
-      request.fields['birthday'] = _birthdayController.text.trim();
-      request.fields['height'] = _heightController.text.trim();
-      request.fields['weight'] = _weightController.text.trim();
-      request.fields['contact_number'] = _contactNumberController.text.trim();
-      request.fields['emergency_number'] = _emergencyNumberController.text.trim();
-      request.fields['user_id'] = user!.id.toString(); // Include user ID
-
-      // Debug: Print the request payload
-      print("Request Payload: ${request.fields}");
+      // Prepare form data as a JSON object
+      final Map<String, dynamic> formData = {
+        'firstName': _firstNameController.text.trim(),
+        'middleName': _middleNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'house_number': _houseNumberController.text.trim(),
+        'street': _streetController.text.trim(),
+        'subdivision': _subdivisionController.text.trim().isEmpty
+            ? 'N/A'
+            : _subdivisionController.text.trim(),
+        'gender': _selectedGender ?? 'Male',
+        'civil_status': _selectedCivilStatus ?? 'Single',
+        'contact_number': _contactNumberController.text.trim(),
+        'user_id': user!.id.toString(),
+      };
 
       try {
-        final response = await request.send();
-        final responseString = await response.stream.bytesToString();
-        print("API Response: $responseString");
+        print("Submitting form to $apiUrl...");
+        print("Form Data: ${jsonEncode(formData)}");
 
-        final responseBody = jsonDecode(responseString);
+        final response = await http.post(
+          Uri.parse(apiUrl),
+          headers: {'Content-Type': 'application/json'}, // Set content type to JSON
+          body: jsonEncode(formData), // Encode the data as JSON
+        );
+
+        print("Response Status Code: ${response.statusCode}");
+        print("Response Body: ${response.body}");
+
+        final responseBody = jsonDecode(response.body);
 
         if (response.statusCode == 200 && responseBody['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Cedula form submitted successfully!")),
+            const SnackBar(content: Text("Cedula request submitted successfully!")),
           );
           _clearForm();
         } else {
@@ -185,24 +138,27 @@ class _CedulaFormState extends State<CedulaForm> {
   }
 
   void _clearForm() {
-    _fullNameController.clear();
+    _firstNameController.clear();
+    _middleNameController.clear();
+    _lastNameController.clear();
     _houseNumberController.clear();
     _streetController.clear();
     _subdivisionController.clear();
-    _ageController.clear();
-    _birthplaceController.clear();
-    _heightController.clear();
-    _weightController.clear();
     _contactNumberController.clear();
-    _emergencyNumberController.clear();
-    _birthdayController.clear();
+    setState(() {
+      _selectedGender = 'Male';
+      _selectedCivilStatus = 'Single';
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
+      backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
-        backgroundColor: Colors.red[900],
+        backgroundColor: const Color(0xFF0D2D56),
         title: Text(widget.formType),
         centerTitle: true,
       ),
@@ -214,151 +170,65 @@ class _CedulaFormState extends State<CedulaForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Please fill out the form below:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D2D56),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    "Cedula Form",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Please enter your full name' : null,
+                buildTextField("First Name", _firstNameController),
+                buildTextField("Middle Name", _middleNameController, required: false),
+                buildTextField("Last Name", _lastNameController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("House Number", _houseNumberController, keyboardType: TextInputType.number)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Street", _streetController)),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _houseNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'House Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Please enter your house number' : null,
+                buildTextField("Subdivision (if any)", _subdivisionController, required: false),
+                Row(
+                  children: [
+                    Expanded(child: buildDropdown("Gender", _selectedGender, ['Male', 'Female'], (newValue) {
+                      setState(() {
+                        _selectedGender = newValue;
+                      });
+                    })),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Anulled'], (newValue) {
+                      setState(() {
+                        _selectedCivilStatus = newValue;
+                      });
+                    })),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _streetController,
-                  decoration: const InputDecoration(
-                    labelText: 'Street',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Please enter your street' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _subdivisionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Subdivision (if any)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _ageController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Age',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => parseInt(value!) == null ? 'Enter a valid age' : null,
-                ),
-                const SizedBox(height: 15),
-                GestureDetector(
-                  onTap: () => _selectDate(context),
-                  child: AbsorbPointer(
-                    child: TextFormField(
-                      controller: _birthdayController,
-                      decoration: const InputDecoration(
-                        labelText: 'Birthday (YYYY-MM-DD)',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Please select your birthday' : null,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                DropdownButtonFormField<String>(
-                  value: _selectedGender,
-                  decoration: const InputDecoration(
-                    labelText: 'Gender',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: ['Male', 'Female']
-                      .map((gender) => DropdownMenuItem(value: gender, child: Text(gender)))
-                      .toList(),
-                  onChanged: (newValue) => setState(() => _selectedGender = newValue),
-                ),
-                const SizedBox(height: 15),
-                DropdownButtonFormField<String>(
-                  value: _selectedCivilStatus,
-                  decoration: const InputDecoration(
-                    labelText: 'Civil Status',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: ['Single', 'Married', 'Widowed', 'Annulled']
-                      .map((status) => DropdownMenuItem(value: status, child: Text(status)))
-                      .toList(),
-                  onChanged: (newValue) => setState(() => _selectedCivilStatus = newValue),
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _birthplaceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Birthplace',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Please enter your birthplace' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _heightController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Height (cm)',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => parseDouble(value!) == null ? 'Enter valid height' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _weightController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Weight (kg)',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => parseDouble(value!) == null ? 'Enter valid weight' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _contactNumberController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Contact Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Enter contact number' : null,
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: _emergencyNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'In case of Emergency',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Enter emergency contact' : null,
-                ),
+                buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[900],
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 15, horizontal: 30),
+                      backgroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                     ),
-                    onPressed: confirmSubmission,
-                    child: const Text(
+                    onPressed: _isLoading ? null : confirmSubmission, // Disable button when loading
+                    child: _isLoading
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : const Text(
                       'Submit',
                       style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
@@ -368,6 +238,88 @@ class _CedulaFormState extends State<CedulaForm> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget buildTextField(String label, TextEditingController controller, {TextInputType? keyboardType, bool readOnly = false, VoidCallback? onTap, bool required = true}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          TextFormField(
+            controller: controller,
+            style: const TextStyle(color: Colors.black),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10), // Smaller padding
+              suffixIcon: onTap != null ? IconButton(
+                icon: const Icon(Icons.calendar_today),
+                onPressed: onTap,
+              ) : null,
+            ),
+            keyboardType: keyboardType,
+            readOnly: readOnly,
+            validator: (value) {
+              if (required && (value == null || value.isEmpty)) {
+                return 'Please enter $label';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildDropdown(String label, String? value, List<String> items, Function(String?) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 5),
+          DropdownButtonFormField<String>(
+            value: value,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            ),
+            items: items.map((item) {
+              return DropdownMenuItem(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select $label';
+              }
+              return null;
+            },
+          ),
+        ],
       ),
     );
   }

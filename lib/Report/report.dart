@@ -22,6 +22,7 @@ class _ReportPageState extends State<ReportPage> {
   final TextEditingController _noteController = TextEditingController();
   final LatLng _targetLocation = LatLng(15.113359178687087, 120.56616699467249);
   User? user;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -35,6 +36,10 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Future<void> _determinePosition() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -43,6 +48,9 @@ class _ReportPageState extends State<ReportPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Location services are disabled. Please enable them.')),
       );
+      setState(() {
+        _isLoading = false;
+      });
       return;
     }
 
@@ -53,6 +61,9 @@ class _ReportPageState extends State<ReportPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location permissions are denied.')),
         );
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
     }
@@ -61,6 +72,9 @@ class _ReportPageState extends State<ReportPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Location permissions are permanently denied.')),
       );
+      setState(() {
+        _isLoading = false;
+      });
       return;
     }
 
@@ -70,13 +84,13 @@ class _ReportPageState extends State<ReportPage> {
 
     setState(() {
       _currentLocation = LatLng(position.latitude, position.longitude);
+      _isLoading = false;
     });
   }
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
 
-    // Show a dialog to choose between camera and gallery
     final source = await showDialog<ImageSource>(
       context: context,
       builder: (context) => AlertDialog(
@@ -107,7 +121,7 @@ class _ReportPageState extends State<ReportPage> {
 
   void _removeImage() {
     setState(() {
-      _imageFile = null; // Clear the selected image
+      _imageFile = null;
     });
   }
 
@@ -131,7 +145,6 @@ class _ReportPageState extends State<ReportPage> {
       return;
     }
 
-    // Show confirmation dialog
     bool? confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -158,6 +171,10 @@ class _ReportPageState extends State<ReportPage> {
     );
 
     if (confirm == true) {
+      setState(() {
+        _isLoading = true;
+      });
+
       try {
         final request = http.MultipartRequest('POST', Uri.parse('https://baranguard.shop/API/report.php'));
         String userId = user!.id.toString();
@@ -185,6 +202,10 @@ class _ReportPageState extends State<ReportPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: $e')),
         );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -192,7 +213,7 @@ class _ReportPageState extends State<ReportPage> {
   void _clearForm() {
     _noteController.clear();
     setState(() {
-      _imageFile = null; // Clear the selected image
+      _imageFile = null;
     });
   }
 
@@ -202,16 +223,9 @@ class _ReportPageState extends State<ReportPage> {
       appBar: AppBar(
         title: const Text('Report Location'),
       ),
-      body: _currentLocation == null
+      body: _isLoading
           ? const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Fetching location, please wait...'),
-          ],
-        ),
+        child: CircularProgressIndicator(),
       )
           : SingleChildScrollView(
         child: Padding(

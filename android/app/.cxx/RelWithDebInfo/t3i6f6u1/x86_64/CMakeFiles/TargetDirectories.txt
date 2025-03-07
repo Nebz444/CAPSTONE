@@ -1,0 +1,2 @@
+D:/Thesis/CAPSTONE/android/app/.cxx/RelWithDebInfo/t3i6f6u1/x86_64/CMakeFiles/edit_cache.dir
+D:/Thesis/CAPSTONE/android/app/.cxx/RelWithDebInfo/t3i6f6u1/x86_64/CMakeFiles/rebuild_cache.dir

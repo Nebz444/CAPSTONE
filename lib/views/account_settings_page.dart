@@ -20,11 +20,19 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   User? user;
   String? birthday;
   File? _profileImage;
+  bool _isEditing = false;
+  TextEditingController firstNameController = TextEditingController();
+  TextEditingController lastNameController = TextEditingController();
+  TextEditingController middleNameController = TextEditingController();
+  TextEditingController suffixController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController mobileNumberController = TextEditingController();
+  TextEditingController homeAddressController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    requestPermissions(); // Ensure permissions are granted
+    requestPermissions();
     fetchUserDetails();
   }
 
@@ -36,6 +44,16 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   Future<void> fetchUserDetails() async {
     user = Provider.of<UserProvider>(context, listen: false).user;
 
+    if (user != null) {
+      firstNameController.text = user!.firstName ?? '';
+      lastNameController.text = user!.lastName ?? '';
+      middleNameController.text = user!.middleName ?? '';
+      suffixController.text = user!.suffix ?? '';
+      mobileNumberController.text = user!.mobileNumber ?? '';
+      emailController.text = user!.email ?? '';
+      homeAddressController.text = user!.homeAddress ?? '';
+    }
+
     if (user?.birthday != null) {
       birthday = DateFormat('yyyy-MM-dd').format(user!.birthday!);
     } else {
@@ -44,11 +62,73 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedProfileImage = prefs.getString('profileImage');
-
-    if (savedProfileImage != null && savedProfileImage.isNotEmpty) {
+    if (savedProfileImage != null) {
       setState(() {
         user!.profileImage = savedProfileImage;
       });
+    }
+  }
+
+  void _toggleEdit() {
+    setState(() {
+      _isEditing = !_isEditing;
+    });
+  }
+
+  Future<void> _saveChanges() async {
+    try {
+      final requestBody = {
+        'action': 'update_profile',
+        'username': user!.username,
+        'last_name': lastNameController.text,
+        'first_name': firstNameController.text,
+        'middle_name': middleNameController.text,
+        'suffix': suffixController.text,
+        'email_address': emailController.text,
+        'mobile_number': mobileNumberController.text,
+        'home_address': homeAddressController.text,
+      };
+
+      final response = await http.post(
+        Uri.parse('https://baranguard.shop/API/dartdb.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
+      );
+
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
+      final responseData = jsonDecode(response.body);
+
+      if (responseData['status'] == 'success') {
+        Provider.of<UserProvider>(context, listen: false).updateUser(
+          firstName: firstNameController.text,
+          lastName: lastNameController.text,
+          middleName: middleNameController.text,
+          suffix: suffixController.text,
+          email: emailController.text,
+          mobileNumber: mobileNumberController.text,
+          homeAddress: homeAddressController.text,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profile updated successfully')),
+        );
+
+        setState(() {
+          _isEditing = false;
+        });
+
+        await fetchUserDetails();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Update failed: ${responseData['message']}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating profile: ${e.toString()}')),
+      );
     }
   }
 
@@ -68,10 +148,8 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           user!.profileImage = uploadedImageUrl;
         });
 
-        // Update the UserProvider with the new profile image
         Provider.of<UserProvider>(context, listen: false).updateProfileImage(uploadedImageUrl);
 
-        // Save the new profile image URL to SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('profileImage', uploadedImageUrl);
 
@@ -91,40 +169,28 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
   Future<String?> _uploadProfileImage(File imageFile) async {
     try {
-      // Print debug information
-      print("Image picked: ${imageFile.path}");
-      print("Sending request with user_id: ${user!.id} and action: upload_profile_picture");
-
-      // Create the multipart request
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://baranguard.shop/API/dartdb.php'), // Correct API URL
+        Uri.parse('https://baranguard.shop/API/dartdb.php'),
       );
 
-      // Add the image file to the request
       request.files.add(await http.MultipartFile.fromPath(
-        'image', // Ensure this matches the server's expected field name
+        'image',
         imageFile.path,
       ));
 
-      // Add additional fields
       request.fields['user_id'] = user!.id.toString();
       request.fields['action'] = 'upload_profile_picture'; // Ensure this matches the server's expected action
 
       // Print the request fields for debugging
       print("Request fields: ${request.fields}");
-
-      // Send the request
       var response = await request.send();
-
-      // Get the response data
       var responseData = await response.stream.bytesToString();
       print("Upload Response: $responseData"); // Debugging
 
       // Parse the JSON response
       var jsonResponse = json.decode(responseData);
 
-      // Check if the upload was successful
       if (jsonResponse['status'] == 'success') {
         print("Uploaded Image URL: ${jsonResponse['profile_image_path']}"); // Log success
         return jsonResponse['profile_image_path'];
@@ -146,15 +212,28 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
-        title: const Text('Account Settings'),
+        backgroundColor: const Color(0xFF0D2D56), // Darker blue for app bar
+        title: const Text('Account Settings', style: TextStyle(color: Colors.white)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          _isEditing
+              ? IconButton(
+            icon: const Icon(Icons.check, color: Colors.white),
+            onPressed: _saveChanges,
+          )
+              : IconButton(
+            icon: const Icon(Icons.edit, color: Colors.white),
+            onPressed: _toggleEdit,
+          ),
+        ],
       ),
       body: user == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
@@ -179,15 +258,30 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             ),
           ),
           const SizedBox(height: 20),
-          _buildInfoRow("Last Name", user?.lastName),
-          _buildInfoRow("First Name", user?.firstName),
-          _buildInfoRow("Middle Name", user?.middleName),
-          _buildInfoRow("Suffix", user?.suffix),
-          _buildInfoRow("Birthday", birthday),
+          _isEditing
+              ? _buildEditableStringField("First Name", firstNameController, user?.firstName)
+              : _buildInfoRow("First Name", user?.firstName),
+          _isEditing
+              ? _buildEditableStringField("Last Name", lastNameController, user?.lastName)
+              : _buildInfoRow("Last Name", user?.lastName),
+          _isEditing
+              ? _buildEditableStringField("Middle Name", middleNameController, user?.middleName)
+              : _buildInfoRow("Middle Name", user?.middleName),
+          _isEditing
+              ? _buildEditableStringField("Suffix", suffixController, user?.suffix)
+              : _buildInfoRow("Suffix", user?.suffix),
+          _buildInfoRow("Birthdate", birthday),
           _buildInfoRow("Username", user?.username),
-          _buildInfoRow("Mobile Number", user?.mobileNumber),
-          _buildInfoRow("Email Address", user?.email),
-          _buildInfoRow("Home Address", user?.homeAddress),
+          _buildInfoRow("Gender", user?.gender),
+          _isEditing
+              ? _buildEditableStringField("Mobile Number", mobileNumberController, user?.mobileNumber)
+              : _buildInfoRow("Mobile Number", user?.mobileNumber),
+          _isEditing
+              ? _buildEditableStringField("Email", emailController, user?.email)
+              : _buildInfoRow("Email", user?.email),
+          _isEditing
+              ? _buildEditableStringField("Home Address", homeAddressController, user?.homeAddress)
+              : _buildInfoRow("Home Address", user?.homeAddress),
         ],
       ),
     );
@@ -201,13 +295,35 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         children: [
           Expanded(
             flex: 2,
-            child: Text("$label:", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            child: Text("$label:", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
           ),
           Expanded(
             flex: 3,
-            child: Text(value ?? 'N/A', style: const TextStyle(fontSize: 16)),
+            child: Text(value ?? 'N/A', style: const TextStyle(fontSize: 16, color: Colors.white)),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEditableStringField(String label, TextEditingController controller, String? current_info) {
+    controller.text = current_info ?? 'N/A';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(color: Colors.black),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.white),
+          filled: true,
+          fillColor: Colors.grey[300],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
     );
   }

@@ -147,7 +147,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person),
+              leading: const Icon(Icons.campaign),
               title: const Text('Complaints'),
               onTap: () {
                 Navigator.push(context, RouteUtils.createRoute(ComplaintsForm()));
@@ -168,7 +168,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.phone),
+              leading: const Icon(Icons.article),
               title: const Text('Contacts'),
               onTap: () {
                 Navigator.push(context, RouteUtils.createRoute(const ContactPage()));
@@ -201,10 +201,10 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.article, size: 30), label: 'Reports'),
-          BottomNavigationBarItem(icon: Icon(Icons.people, size: 30), label: 'Community'),
+          BottomNavigationBarItem(icon: Icon(Icons.mail, size: 30), label: 'Request'),
+          BottomNavigationBarItem(icon: Icon(Icons.campaign, size: 30), label: 'Community'),
           BottomNavigationBarItem(icon: Icon(Icons.home, size: 35), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.campaign, size: 30), label: 'Announcements'),
+          BottomNavigationBarItem(icon: Icon(Icons.report_problem, size: 30), label: 'Announcements'),
           BottomNavigationBarItem(icon: Icon(Icons.phone, size: 30), label: 'Contact'),
         ],
       ),

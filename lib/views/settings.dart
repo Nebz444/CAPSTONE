@@ -32,25 +32,6 @@ class _SettingsPageState extends State<SettingsPage> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            _buildSectionHeader('General'),
-            _buildSwitchListTile(
-              title: 'Enable Notifications',
-              value: _notificationsEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _notificationsEnabled = value;
-                });
-              },
-            ),
-            _buildSwitchListTile(
-              title: 'Dark Mode',
-              value: _darkModeEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _darkModeEnabled = value;
-                });
-              },
-            ),
             const SizedBox(height: 20),
             _buildSectionHeader('Account'),
             _buildListTile(

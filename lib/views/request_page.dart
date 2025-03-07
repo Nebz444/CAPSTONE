@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:baranguard/forms/barangay_id.dart'; // Import the Barangay ID form page
 import 'package:baranguard/forms/cedula.dart';
 import '../forms/barangay_certificate.dart';
-import '../forms/indigencey.dart';
+import '../forms/indigency.dart';
 import '../forms/business_permit.dart';
+import '../forms/clearance.dart';
 
 class RequestPage extends StatelessWidget {
   @override
@@ -27,7 +28,9 @@ class RequestPage extends StatelessWidget {
             const SizedBox(height: 10),
             buildRequestButton(context, 'Certificate of Indigency', IndigencyForm(formType: 'Indigency Form')),
             const SizedBox(height: 10),
-            buildRequestButton(context, 'Business Permit', BusinessForm(formType: 'Business Permit'))
+            buildRequestButton(context, 'Business Permit', BusinessForm(formType: 'Business Permit')),
+            const SizedBox(height: 10),
+            buildRequestButton(context, 'Clearance', Clearance(formType: 'Clearance'))
           ],
         ),
       ),

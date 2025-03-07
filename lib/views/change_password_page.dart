@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart'; // For storing user ID
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   @override
@@ -15,19 +15,21 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
-  int? _userId; // Store the user ID
+  bool _obscureCurrentPassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
+  int? _userId;
 
   @override
   void initState() {
     super.initState();
-    _loadUserId(); // Load the user ID when the page initializes
+    _loadUserId();
   }
 
-  // Load the user ID from SharedPreferences
   Future<void> _loadUserId() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userId = prefs.getInt('user_id'); // Assuming you stored the user ID as 'user_id'
+      _userId = prefs.getInt('user_id');
     });
   }
 
@@ -37,32 +39,38 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         _isLoading = true;
       });
 
-      final url = Uri.parse('https://baranguard.shop/API/changepassword.php');
-      final response = await http.post(
-        url,
-        body: {
-          'user_id': _userId.toString(), // Send the user ID as a string
-          'currentPassword': _currentPasswordController.text,
-          'newPassword': _newPasswordController.text,
-        },
-      );
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      debugPrint("Change Password Response: ${response.body}");
-
-      final responseData = json.decode(response.body);
-      if (responseData['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password changed successfully')),
+      try {
+        final url = Uri.parse('https://baranguard.shop/API/changepassword.php');
+        final response = await http.post(
+          url,
+          body: {
+            'user_id': _userId.toString(),
+            'currentPassword': _currentPasswordController.text,
+            'newPassword': _newPasswordController.text,
+          },
         );
-        Navigator.pop(context); // Go back to the previous screen
-      } else {
+
+        debugPrint("Change Password Response: ${response.body}");
+
+        final responseData = json.decode(response.body);
+        if (responseData['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Password changed successfully')),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to change password: ${responseData['message']}')),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to change password: ${responseData['message']}')),
+          SnackBar(content: Text('An error occurred: $e')),
         );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     } else if (_userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -74,62 +82,119 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0F4C81), // Dark Blue Background
       appBar: AppBar(
-        title: const Text('Change Password'),
+        title: const Text('New Password'),
+        backgroundColor: const Color(0xFF072F5F), // Slightly Darker Blue
+        centerTitle: true,
+        elevation: 0,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextFormField(
+              _buildPasswordField(
+                label: 'Current Password',
                 controller: _currentPasswordController,
-                decoration: const InputDecoration(labelText: 'Current Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your current password';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _newPasswordController,
-                decoration: const InputDecoration(labelText: 'New Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a new password';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: const InputDecoration(labelText: 'Confirm New Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please confirm your new password';
-                  }
-                  if (value != _newPasswordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
+                obscureText: _obscureCurrentPassword,
+                onToggleVisibility: () {
+                  setState(() {
+                    _obscureCurrentPassword = !_obscureCurrentPassword;
+                  });
                 },
               ),
               const SizedBox(height: 20),
+              _buildPasswordField(
+                label: 'New Password',
+                controller: _newPasswordController,
+                obscureText: _obscureNewPassword,
+                onToggleVisibility: () {
+                  setState(() {
+                    _obscureNewPassword = !_obscureNewPassword;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildPasswordField(
+                label: 'Confirm Password',
+                controller: _confirmPasswordController,
+                obscureText: _obscureConfirmPassword,
+                onToggleVisibility: () {
+                  setState(() {
+                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                  });
+                },
+              ),
+              const SizedBox(height: 30),
               _isLoading
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
                 onPressed: _changePassword,
-                child: const Text('Change Password'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF072F5F), // Dark Blue Button
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                ),
+                child: const Text(
+                  'Submit',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPasswordField({
+    required String label,
+    required TextEditingController controller,
+    required bool obscureText,
+    required VoidCallback onToggleVisibility,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+        ),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.grey[300],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide.none,
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscureText ? Icons.visibility : Icons.visibility_off,
+                color: Colors.grey[700],
+              ),
+              onPressed: onToggleVisibility,
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter $label';
+            }
+            if (label == 'Confirm Password' && value != _newPasswordController.text) {
+              return 'Passwords do not match';
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 }

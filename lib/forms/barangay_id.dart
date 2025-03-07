@@ -8,7 +8,7 @@ import '../provider/user_provider.dart'; // Ensure this import path is correct
 class BarangayID extends StatefulWidget {
   final String formType;
 
-  BarangayID({required this.formType});
+  const BarangayID({required this.formType});
 
   @override
   _BarangayIDState createState() => _BarangayIDState();
@@ -16,7 +16,9 @@ class BarangayID extends StatefulWidget {
 
 class _BarangayIDState extends State<BarangayID> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _houseNumberController = TextEditingController();
   final _streetController = TextEditingController();
   final _subdivisionController = TextEditingController();
@@ -51,26 +53,28 @@ class _BarangayIDState extends State<BarangayID> {
     bool? confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-          title: const Text("Confirm Submission"),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text("Full Name: ${_fullNameController.text}"),
-                Text("House Number: ${_houseNumberController.text}"),
-                Text("Street: ${_streetController.text}"),
-                Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
-                Text("Age: ${_ageController.text}"),
-                Text("Birthday: ${_birthdayController.text}"),
-                Text("Birthplace: ${_birthplaceController.text}"),
-                Text("Gender: $_selectedGender"),
-                Text("Civil Status: $_selectedCivilStatus"),
-                Text("Height: ${_heightController.text} cm"),
-                Text("Weight: ${_weightController.text} kg"),
-                Text("Contact Number: ${_contactNumberController.text}"),
-                Text("Emergency Contact: ${_emergencyNumberController.text}"),
-              ],
-            ),
+        title: const Text("Confirm Submission"),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text("First Name: ${_firstNameController.text}"),
+              Text("Middle Name: ${_middleNameController.text}"),
+              Text("Last Name: ${_lastNameController.text}"),
+              Text("House Number: ${_houseNumberController.text}"),
+              Text("Street: ${_streetController.text}"),
+              Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
+              Text("Age: ${_ageController.text}"),
+              Text("Birthday: ${_birthdayController.text}"),
+              Text("Birthplace: ${_birthplaceController.text}"),
+              Text("Gender: $_selectedGender"),
+              Text("Civil Status: $_selectedCivilStatus"),
+              Text("Height: ${_heightController.text} cm"),
+              Text("Weight: ${_weightController.text} kg"),
+              Text("Contact Number: ${_contactNumberController.text}"),
+              Text("Emergency Contact: ${_emergencyNumberController.text}"),
+            ],
           ),
+        ),
         actions: <Widget>[
           TextButton(
             child: const Text("Edit"),
@@ -85,9 +89,9 @@ class _BarangayIDState extends State<BarangayID> {
     );
 
     if (confirm == true) {
-    setState(() => _isLoading = true); // Show loading indicator
-    await submitForm();
-    setState(() => _isLoading = false); // Hide loading indicator
+      setState(() => _isLoading = true); // Show loading indicator
+      await submitForm();
+      setState(() => _isLoading = false); // Hide loading indicator
     }
   }
 
@@ -96,30 +100,38 @@ class _BarangayIDState extends State<BarangayID> {
       const apiUrl = 'https://baranguard.shop/API/barangay_id.php';
 
       // Prepare form data
-      final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-      request.fields['full_name'] = _fullNameController.text.trim();
-      request.fields['house_number'] = _houseNumberController.text.trim();
-      request.fields['street'] = _streetController.text.trim();
-      request.fields['subdivision'] = _subdivisionController.text.trim().isEmpty
-          ? 'N/A'
-          : _subdivisionController.text.trim();
-      request.fields['age'] = _ageController.text.trim();
-      request.fields['gender'] = _selectedGender ?? 'Male';
-      request.fields['civil_status'] = _selectedCivilStatus ?? 'Single';
-      request.fields['birthplace'] = _birthplaceController.text.trim();
-      request.fields['birthday'] = _birthdayController.text.trim();
-      request.fields['height'] = _heightController.text.trim();
-      request.fields['weight'] = _weightController.text.trim();
-      request.fields['contact_number'] = _contactNumberController.text.trim();
-      request.fields['emergency_number'] = _emergencyNumberController.text.trim();
-      request.fields['user_id'] = user!.id.toString();
+      final Map<String, dynamic> formData = {
+        'firstName': _firstNameController.text.trim(),
+        'middleName': _middleNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'house_number': _houseNumberController.text.trim(),
+        'street': _streetController.text.trim(),
+        'subdivision': _subdivisionController.text.trim().isEmpty
+            ? 'N/A'
+            : _subdivisionController.text.trim(),
+        'age': _ageController.text.trim(),
+        'gender': _selectedGender ?? 'Male''Female',
+        'civil_status': _selectedCivilStatus ?? 'Single''Married''Widowed''Annulled',
+        'birthplace': _birthplaceController.text.trim(),
+        'birthday': _birthdayController.text.trim(),
+        'height': _heightController.text.trim(),
+        'weight': _weightController.text.trim(),
+        'contact_number': _contactNumberController.text.trim(),
+        'emergency_number': _emergencyNumberController.text.trim(),
+        'user_id': user!.id.toString(),
+      };
 
       // Debug: Print the request payload
-      print("Request Payload: ${request.fields}");
+      print("Request Payload: $formData");
 
       try {
-        final response = await request.send();
-        final responseString = await response.stream.bytesToString();
+        final response = await http.post(
+          Uri.parse(apiUrl),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: formData,
+        );
+
+        final responseString = response.body;
         print("Raw API Response: $responseString"); // Debugging line
 
         // Check if the response is valid JSON
@@ -154,7 +166,9 @@ class _BarangayIDState extends State<BarangayID> {
   }
 
   void _clearForm() {
-    _fullNameController.clear();
+    _firstNameController.clear();
+    _middleNameController.clear();
+    _lastNameController.clear();
     _houseNumberController.clear();
     _streetController.clear();
     _subdivisionController.clear();
@@ -183,6 +197,7 @@ class _BarangayIDState extends State<BarangayID> {
       setState(() {
         _birthdayController.text =
         "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+        _ageController.text = (DateTime.now().year - pickedDate.year).toString();
       });
     }
   }
@@ -195,7 +210,6 @@ class _BarangayIDState extends State<BarangayID> {
       backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2D56),
-        title: Text(widget.formType),
         centerTitle: true,
       ),
       body: Padding(
@@ -220,20 +234,22 @@ class _BarangayIDState extends State<BarangayID> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                buildTextField("Full Name", _fullNameController),
+                buildTextField("First Name", _firstNameController),
+                buildTextField("Middle Name", _middleNameController, required: false),
+                buildTextField("Last Name", _lastNameController),
                 Row(
                   children: [
-                    Expanded(child: buildTextField("House Number", _houseNumberController)),
+                    Expanded(child: buildTextField("House Number", _houseNumberController, keyboardType: TextInputType.number)),
                     const SizedBox(width: 10),
                     Expanded(child: buildTextField("Street", _streetController)),
                   ],
                 ),
-                buildTextField("Subdivision (if any)", _subdivisionController),
+                buildTextField("Subdivision (if any)", _subdivisionController, required: false),
                 Row(
                   children: [
-                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
-                    const SizedBox(width: 10),
                     Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
                   ],
                 ),
                 buildTextField("Birthplace", _birthplaceController),
@@ -245,7 +261,7 @@ class _BarangayIDState extends State<BarangayID> {
                       });
                     })),
                     const SizedBox(width: 10),
-                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Anulled'], (newValue) {
+                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Annulled'], (newValue) {
                       setState(() {
                         _selectedCivilStatus = newValue;
                       });
@@ -260,7 +276,7 @@ class _BarangayIDState extends State<BarangayID> {
                   ],
                 ),
                 buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
-                buildTextField("Emergency Contact", _emergencyNumberController, keyboardType: TextInputType.phone),
+                buildTextField("Emergency Contact", _emergencyNumberController),
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
@@ -292,7 +308,7 @@ class _BarangayIDState extends State<BarangayID> {
     );
   }
 
-  Widget buildTextField(String label, TextEditingController controller, {TextInputType? keyboardType, bool readOnly = false, VoidCallback? onTap}) {
+  Widget buildTextField(String label, TextEditingController controller, {TextInputType? keyboardType, bool readOnly = false, VoidCallback? onTap, bool required = true}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
@@ -322,7 +338,7 @@ class _BarangayIDState extends State<BarangayID> {
             keyboardType: keyboardType,
             readOnly: readOnly,
             validator: (value) {
-              if (value == null || value.isEmpty) {
+              if (required && (value == null || value.isEmpty)) {
                 return 'Please enter $label';
               }
               return null;
