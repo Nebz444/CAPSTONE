@@ -24,7 +24,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
-  final String resetPasswordUrl = 'https://baranguard.shop/API/resetpassword.php';
+  final String resetPasswordUrl = 'https://manibaugparalaya.com/API/resetpassword.php';
 
   @override
   void initState() {

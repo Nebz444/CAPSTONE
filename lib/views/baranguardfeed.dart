@@ -161,7 +161,6 @@ class _BaranguardFeedState extends State<BaranguardFeed> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Baranguard Feed')),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty

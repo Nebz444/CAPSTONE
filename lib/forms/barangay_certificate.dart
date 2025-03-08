@@ -106,7 +106,7 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
 
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      const apiUrl = 'https://baranguard.shop/API/barangay_certificate.php';
+      const apiUrl = 'https://manibaugparalaya.com/API/barangay_certificate.php';
 
       final Map<String, dynamic> formData = {
         'firstName': _firstNameController.text.trim(),

@@ -97,7 +97,7 @@ class _BarangayIDState extends State<BarangayID> {
 
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      const apiUrl = 'https://baranguard.shop/API/barangay_id.php';
+      const apiUrl = 'https://manibaugparalaya.com/API/barangay_id.php';
 
       // Prepare form data
       final Map<String, dynamic> formData = {

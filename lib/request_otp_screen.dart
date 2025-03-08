@@ -20,7 +20,7 @@ class _RequestOTPScreenState extends State<RequestOTPScreen>
   late Animation<double> _fadeAnimation;
 
   // API Endpoint
-  final String sendOtpUrl = "https://baranguard.shop/API/sendotp.php";
+  final String sendOtpUrl = "https://manibaugparalaya.com/API/sendotp.php";
 
   @override
   void initState() {

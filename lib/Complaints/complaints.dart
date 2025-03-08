@@ -120,7 +120,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
 
   Future<void> submitComplaint() async {
     if (_formKey.currentState!.validate()) {
-      const apiUrl = 'https://baranguard.shop/API/complaintsdb.php';
+      const apiUrl = 'https://manibaugparalaya.com/API/complaintsdb.php';
 
       // Determine complaint type and set otherInput if necessary
       String complaintType = _selectedComplaintType == 'Other' ? _otherComplaintController.text : _selectedComplaintType ?? '';

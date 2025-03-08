@@ -130,7 +130,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
   // Form submission function
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      const apiUrl = 'https://baranguard.shop/API/indigency_form.php';
+      const apiUrl = 'https://manibaugparalaya.com/API/indigency_form.php';
 
       // Determine purpose and set otherInput if necessary
       String purpose = _selectedPurpose == 'Other' ? _otherPurposeController.text : _selectedPurpose!;

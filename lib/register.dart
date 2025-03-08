@@ -69,7 +69,7 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
     }
 
     try {
-      var url = Uri.parse('https://baranguard.shop/API/signup.php');
+      var url = Uri.parse('https://manibaugparalaya.com/API/signup.php');
       var response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},

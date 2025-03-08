@@ -97,7 +97,7 @@ class _ClearanceState extends State<Clearance> {
 
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      const apiUrl = 'https://baranguard.shop/API/clearance.php';
+      const apiUrl = 'https://manibaugparalaya.com/API/clearance.php';
 
       // Prepare form data
       final Map<String, dynamic> formData = {

@@ -22,7 +22,7 @@ class _ReportStatusPageState extends State<ReportStatusPage> {
   }
 
   Future<void> fetchReports() async {
-    final url = Uri.parse('https://baranguard.shop/API/get_reports.php?user_id=${widget.userId}');
+    final url = Uri.parse('https://manibaugparalaya.com/API/get_reports.php?user_id=${widget.userId}');
 
     try {
       final response = await http.get(url);

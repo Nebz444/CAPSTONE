@@ -13,6 +13,8 @@ import 'package:baranguard/views/settings.dart';
 import 'package:baranguard/utils/route_utils.dart';
 import 'package:baranguard/views/baranguardfeed.dart';
 import '../Report/reportfirstpage.dart';
+import 'package:baranguard/Complaints/complaintsfirstpage.dart';
+import 'status.dart';
 
 class BaranguardDashboard extends StatefulWidget {
   const BaranguardDashboard({super.key});
@@ -34,7 +36,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
   //eto mga main buttons
   final List<Widget> _pages = [
     RequestPage(),
-    ComplaintsForm(),
+    ComplaintsFirstpage(),
     const BaranguardFeed(), // BaranguardFeed is one of the pages
     ReportFirstPage(),
     const ContactPage(),
@@ -94,7 +96,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF154C79),
         title: const Text(
-          'Baranguard',
+          'baranguard',
           style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -169,9 +171,9 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
             ),
             ListTile(
               leading: const Icon(Icons.article),
-              title: const Text('Contacts'),
+              title: const Text('Status'),
               onTap: () {
-                Navigator.push(context, RouteUtils.createRoute(const ContactPage()));
+                Navigator.push(context, RouteUtils.createRoute(const StatusPage()));
               },
             ),
             const Divider(),
@@ -202,9 +204,9 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.mail, size: 30), label: 'Request'),
-          BottomNavigationBarItem(icon: Icon(Icons.campaign, size: 30), label: 'Community'),
+          BottomNavigationBarItem(icon: Icon(Icons.campaign, size: 30), label: 'Complaints'),
           BottomNavigationBarItem(icon: Icon(Icons.home, size: 35), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.report_problem, size: 30), label: 'Announcements'),
+          BottomNavigationBarItem(icon: Icon(Icons.report_problem, size: 30), label: 'Report'),
           BottomNavigationBarItem(icon: Icon(Icons.phone, size: 30), label: 'Contact'),
         ],
       ),

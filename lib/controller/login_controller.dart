@@ -7,7 +7,7 @@ import '../model/users_model.dart';
 
 class LoginController {
   final Client _client = http.Client();
-  final String apiUrl = "https://baranguard.shop/API/dartdb.php";
+  final String apiUrl = "https://manibaugparalaya.com/API/dartdb.php";
 
   // Save user session
   Future<void> _saveUserSession(int userId, String username) async {

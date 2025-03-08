@@ -95,7 +95,7 @@ class _BusinessFormState extends State<BusinessForm> {
   // Form submission function
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      const apiUrl = 'https://baranguard.shop/API/business_permit_form.php';
+      const apiUrl = 'https://manibaugparalaya.com/API/business_permit_form.php';
 
       // Prepare form data
       final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
