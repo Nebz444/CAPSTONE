@@ -22,34 +22,37 @@ class _CedulaStatusPageState extends State<CedulaStatusPage> {
   }
 
   Future<void> fetchCedulaRequests() async {
-    final url = Uri.parse('https://manibaugparalaya.com/API/getCedula.php?user_id=${widget.userId}');
+    final url1 = Uri.parse('https://manibaugparalaya.com/API/getCedula.php?user_id=${widget.userId}');
+    final url2 = Uri.parse('https://manibaugparalaya.com/API/getCedula1.php?user_id=${widget.userId}');
 
     try {
       print("Fetching Cedula data for user_id: ${widget.userId}");
-      final response = await http.get(url);
 
-      print("Status Code: ${response.statusCode}");
-      print("Response Body: ${response.body}");
+      // Fetch both APIs in parallel
+      final response1 = await http.get(url1);
+      final response2 = await http.get(url2);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print("Decoded API Response: ${json.encode(data)}");
+      print("Response1 Status: ${response1.statusCode}");
+      print("Response2 Status: ${response2.statusCode}");
 
-        if (data is Map && data.containsKey("message")) {
-          print("API Message: ${data["message"]}");
-          setState(() {
-            cedulaRequests = [];
-            isLoading = false;
-          });
-        } else {
-          setState(() {
-            cedulaRequests = data;
-            isLoading = false;
-          });
-        }
-      } else {
-        throw Exception("Failed to load Cedula requests");
+      List cedulaRequests = [];
+
+      if (response1.statusCode == 200) {
+        final data1 = json.decode(response1.body);
+        print("Response1 Data: ${json.encode(data1)}");
+        if (data1 is List) cedulaRequests.addAll(data1);
       }
+
+      if (response2.statusCode == 200) {
+        final data2 = json.decode(response2.body);
+        print("Response2 Data: ${json.encode(data2)}");
+        if (data2 is List) cedulaRequests.addAll(data2);
+      }
+
+      setState(() {
+        this.cedulaRequests = cedulaRequests;
+        isLoading = false;
+      });
     } catch (error) {
       print("Error fetching Cedula requests: $error");
       setState(() => isLoading = false);
@@ -86,11 +89,11 @@ class _CedulaStatusPageState extends State<CedulaStatusPage> {
     // Handle potential null values
     String firstName = request['first_name'] ?? 'Unknown';
     String lastName = request['last_name'] ?? 'Unknown';
-    String status = request['status'] ?? 'Pending';
+    String status = request['status'] ?? 'pending';
     String dateRequested = request['created_at'] ?? 'N/A';
 
     // Define status color based on status value
-    Color statusColor = status == 'Accepted' ? Colors.green : (status == 'Pending' ? Colors.orange : Colors.orange);
+    Color statusColor = status == 'accepted' ? Colors.green : (status == 'pending' ? Colors.orange : Colors.orange);
 
     return Container(
       width: double.infinity,

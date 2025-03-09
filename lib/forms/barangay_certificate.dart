@@ -292,7 +292,7 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
         // House Number and Street
         Row(
           children: [
-            Expanded(child: buildTextField("House Number", _houseNumberController, keyboardType: TextInputType.phone)),
+            Expanded(child: buildTextField("House Number", _houseNumberController)),
             SizedBox(width: isSmallScreen ? 8 : 10),
             Expanded(child: buildTextField("Street", _streetController)),
           ],
