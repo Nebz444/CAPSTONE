@@ -40,7 +40,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       });
 
       try {
-        final url = Uri.parse('https://baranguard.shop/API/changepassword.php');
+        final url = Uri.parse('https://manibaugparalaya.com/API/changepassword.php');
         final response = await http.post(
           url,
           body: {

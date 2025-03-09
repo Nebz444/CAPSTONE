@@ -171,7 +171,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://baranguard.shop/API/dartdb.php'),
+        Uri.parse('https://manibaugparalaya.com/API/dartdb.php'),
       );
 
       request.files.add(await http.MultipartFile.fromPath(

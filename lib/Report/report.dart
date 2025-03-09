@@ -234,6 +234,8 @@ class _ReportPageState extends State<ReportPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2D56),
         centerTitle: true,
+          title: const Text('Report Request', style: TextStyle(fontSize: 20, color: Colors.white)),
+          iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isLoading
           ? const Center(

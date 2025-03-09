@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../model/users_model.dart'; // Ensure this import path is correct
 import '../provider/user_provider.dart'; // Ensure this import path is correct
+import 'package:baranguard/formStatus/businesspermitStatus.dart';
 
 class BusinessForm extends StatefulWidget {
   final String formType;
@@ -124,6 +125,12 @@ class _BusinessFormState extends State<BusinessForm> {
             const SnackBar(content: Text("Business permit request submitted successfully!")),
           );
           _clearForm();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BusinessPermitStatusPage(userId: int.parse(user!.id.toString())),
+            ),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseBody['message'] ?? "Failed to submit request.")),
@@ -156,6 +163,7 @@ class _BusinessFormState extends State<BusinessForm> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2D56),
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

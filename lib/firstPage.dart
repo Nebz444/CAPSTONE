@@ -1,11 +1,11 @@
-import 'package:baranguard/register.dart'; // Ensure this import is correct
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // For user provider management
+import 'package:provider/provider.dart';
 import 'package:baranguard/provider/user_provider.dart';
-import 'package:baranguard/views/baranguard_dashboard.dart'; // Import Dashboard screen
-import 'request_otp_screen.dart'; // Import the OTP Request screen
+import 'package:baranguard/views/baranguard_dashboard.dart';
+import 'request_otp_screen.dart';
 import 'controller/login_controller.dart';
 import 'model/users_model.dart';
+import 'package:baranguard/register.dart'; // Ensure this import is correct
 
 class BaranguardWelcomePage extends StatefulWidget {
   const BaranguardWelcomePage({super.key});
@@ -19,41 +19,33 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool showLoginForm = false;
-  bool _isLoading = false; // To manage loading state
+  bool _isLoading = false;
+  bool _obscurePassword = true; // Toggle password visibility
 
-  // Login logic (unchanged)
   Future<void> _login() async {
     String username = _idController.text.trim();
     String password = _passwordController.text.trim();
 
-    // Check if fields are empty
     if (username.isEmpty || password.isEmpty) {
       _showSnackbar('Username and password are required.');
       return;
     }
 
-    // Show loading indicator
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Create a user object
       User user = User(username: username, password: password);
-
-      // Attempt login
       bool success = await _loginController.login(user);
 
       if (success) {
-        // Fetch current user data
         User? currentUser = await _loginController.getUser(username);
 
         if (currentUser != null) {
-          // Save user data to the provider
           Provider.of<UserProvider>(context, listen: false).setUser(currentUser);
           debugPrint("Login successful");
 
-          // Navigate to the dashboard
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
@@ -71,24 +63,21 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
       _showSnackbar('Error: Something went wrong. Please try again later.');
       debugPrint('Login error: $e');
     } finally {
-      // Hide loading indicator
       setState(() {
         _isLoading = false;
       });
     }
   }
 
-  // Function to show SnackBars
   void _showSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  // Custom Page Route with Animation
   Route _createRoute(Widget page) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(1.0, 0.0); // Slide from right
+        const begin = Offset(1.0, 0.0);
         const end = Offset.zero;
         const curve = Curves.easeInOut;
 
@@ -106,13 +95,12 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Prevent app from closing on back button
+      canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF154C79), // Blue background
+        backgroundColor: const Color(0xFF154C79),
         body: SafeArea(
           child: GestureDetector(
             onTap: () {
-              // Close the login form when tapping outside the container
               if (showLoginForm && mounted) {
                 setState(() {
                   showLoginForm = false;
@@ -125,26 +113,23 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    // Fixed Logo and Title
-                    const SizedBox(height: 20), // Increased top spacing
+                    const SizedBox(height: 20),
                     const Text(
                       'Baranguard',
                       style: TextStyle(
-                        fontSize: 50, // Larger font size
+                        fontSize: 50,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 20), // Increased spacing
+                    const SizedBox(height: 20),
                     Image.asset(
                       'lib/images/Logo.png',
-                      width: MediaQuery.of(context).size.width * 0.5, // Larger logo
+                      width: MediaQuery.of(context).size.width * 0.5,
                       height: MediaQuery.of(context).size.width * 0.5,
                       fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 20), // Increased spacing
-
-                    // Animated Login Form or Initial Buttons
+                    const SizedBox(height: 20),
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
                       transitionBuilder: (Widget child, Animation<double> animation) {
@@ -168,10 +153,9 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
     );
   }
 
-  // Initial Buttons
   Widget _buildInitialButtons() {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500), // Smooth transition
+      duration: const Duration(milliseconds: 500),
       transitionBuilder: (widget, animation) {
         return FadeTransition(
           opacity: animation,
@@ -183,24 +167,23 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
       },
       child: Container(
         key: const ValueKey(1),
-        padding: const EdgeInsets.all(40), // Increased padding
+        padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(
-          color: const Color(0xFF9AA6B2), // Gray background
+          color: const Color(0xFF9AA6B2),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Avoid excessive space
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Responsive Button Width
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.7, // Adjust width
+              width: MediaQuery.of(context).size.width * 0.7,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF154C79),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 20), // Consistent button height
+                  padding: const EdgeInsets.symmetric(vertical: 20),
                 ),
                 onPressed: () {
                   if (mounted) {
@@ -211,29 +194,27 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
                 },
                 child: const Text(
                   'Login',
-                  style: TextStyle(color: Colors.white, fontSize: 22), // Adjusted font size
+                  style: TextStyle(color: Colors.white, fontSize: 22),
                 ),
               ),
             ),
-            const SizedBox(height: 20), // Increased spacing
-
-            // Register Button with Animation
+            const SizedBox(height: 20),
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.7, // Adjust width
+              width: MediaQuery.of(context).size.width * 0.7,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF154C79),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 20), // Consistent button height
+                  padding: const EdgeInsets.symmetric(vertical: 20),
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(_createRoute(const BarangayRegistration())); // Use custom animation
+                  Navigator.of(context).push(_createRoute(const BarangayRegistration()));
                 },
                 child: const Text(
                   'Register',
-                  style: TextStyle(color: Colors.white, fontSize: 22), // Adjusted font size
+                  style: TextStyle(color: Colors.white, fontSize: 22),
                 ),
               ),
             ),
@@ -243,11 +224,10 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
     );
   }
 
-  // Login Form
   Widget _buildLoginForm() {
     return Container(
       key: const ValueKey(2),
-      padding: const EdgeInsets.all(25), // Increased padding
+      padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
         color: const Color(0xFF9AA6B2),
         borderRadius: BorderRadius.circular(20),
@@ -256,7 +236,7 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
         children: [
           ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.8, // Prevent overflow
+              maxWidth: MediaQuery.of(context).size.width * 0.8,
             ),
             child: TextField(
               controller: _idController,
@@ -270,14 +250,14 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
               ),
             ),
           ),
-          const SizedBox(height: 20), // Increased spacing
+          const SizedBox(height: 20),
           ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.8, // Prevent overflow
+              maxWidth: MediaQuery.of(context).size.width * 0.8,
             ),
             child: TextField(
               controller: _passwordController,
-              obscureText: true,
+              obscureText: _obscurePassword,
               decoration: InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(
@@ -285,38 +265,47 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
                 ),
                 filled: true,
                 fillColor: Colors.white,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 20), // Increased spacing
-          // Centered Forgot Password
+          const SizedBox(height: 20),
           Center(
             child: TextButton(
               onPressed: () {
-                // Navigate to RequestOTPScreen with animation
                 Navigator.of(context).push(_createRoute(const RequestOTPScreen()));
               },
               child: const Text(
                 'Forgot Password?',
-                style: TextStyle(color: Colors.white, fontSize: 18), // Larger font
+                style: TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),
           ),
-          const SizedBox(height: 20), // Increased spacing
+          const SizedBox(height: 20),
           _isLoading
-              ? const CircularProgressIndicator() // Show loading indicator
+              ? const CircularProgressIndicator()
               : ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF154C79),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 50), // Larger button
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 50),
             ),
             onPressed: _login,
             child: const Text(
               'Login',
-              style: TextStyle(color: Colors.white, fontSize: 20), // Larger font
+              style: TextStyle(color: Colors.white, fontSize: 20),
             ),
           ),
         ],

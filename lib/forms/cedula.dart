@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../model/users_model.dart'; // Ensure this import path is correct
 import '../provider/user_provider.dart'; // Ensure this import path is correct
+import 'package:baranguard/formStatus/cedulaStatus.dart';
 
 class CedulaForm extends StatefulWidget {
   final String formType;
@@ -123,6 +124,12 @@ class _CedulaFormState extends State<CedulaForm> {
             const SnackBar(content: Text("Cedula request submitted successfully!")),
           );
           _clearForm();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CedulaStatusPage(userId: int.parse(user!.id.toString())),
+            ),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseBody['message'] ?? "Failed to submit request.")),
@@ -159,8 +166,8 @@ class _CedulaFormState extends State<CedulaForm> {
       backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2D56),
-        title: Text(widget.formType),
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

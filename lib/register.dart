@@ -10,7 +10,8 @@ class BarangayRegistration extends StatefulWidget {
   _BarangayRegistrationState createState() => _BarangayRegistrationState();
 }
 
-class _BarangayRegistrationState extends State<BarangayRegistration> {
+class _BarangayRegistrationState extends State<BarangayRegistration>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _middleNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -22,16 +23,31 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _homeAddressController = TextEditingController();
   DateTime? _selectedBirthday;
-  bool _isLoading = false; // Track loading state
-  String? _selectedGender; // Track selected gender
-  bool _obscurePassword = true; // Track password visibility
-  bool _obscureConfirmPassword = true; // Track confirm password visibility
+  bool _isLoading = false;
+  String? _selectedGender;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
+  // Animation Controller
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _controller.forward();
+  }
 
   void _signUp() async {
-    if (_isLoading) return; // Prevent multiple clicks
+    if (_isLoading || !mounted) return;
 
     setState(() {
-      _isLoading = true; // Show loading indicator
+      _isLoading = true;
     });
 
     String lastName = _lastNameController.text.trim();
@@ -52,7 +68,7 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
         const SnackBar(content: Text("Passwords do not match")),
       );
       setState(() {
-        _isLoading = false; // Hide loading indicator
+        _isLoading = false;
       });
       return;
     }
@@ -63,7 +79,7 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
         const SnackBar(content: Text("All required fields must be filled.")),
       );
       setState(() {
-        _isLoading = false; // Hide loading indicator
+        _isLoading = false;
       });
       return;
     }
@@ -96,7 +112,6 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Sign up successful!")),
           );
-          // Smooth sliding transition to the first page
           Navigator.of(context).pushReplacement(_createRoute(const BaranguardWelcomePage()));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -115,9 +130,11 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
         const SnackBar(content: Text("An error occurred. Please try again.")),
       );
     } finally {
-      setState(() {
-        _isLoading = false; // Hide loading indicator
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -128,19 +145,18 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (picked != null && picked != _selectedBirthday) {
+    if (picked != null && picked != _selectedBirthday && mounted) {
       setState(() {
         _selectedBirthday = picked;
       });
     }
   }
 
-  // Custom route for sliding transition
   Route _createRoute(Widget page) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(1.0, 0.0); // Slide from right to left
+        const begin = Offset(1.0, 0.0);
         const end = Offset.zero;
         const curve = Curves.easeInOut;
         var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
@@ -155,93 +171,70 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF154C79), // Background color
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Back Button (Fixed Position)
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(_createRoute(const BaranguardWelcomePage()));
-                  },
-                ),
-              ),
-              const SizedBox(height: 10),
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
-              // Container for the form (Gray background)
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],  //0xFF9AA6B2 if color is not good change it to this
-                    borderRadius: BorderRadius.circular(15),
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async => !_isLoading,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF154C79),
+        body: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  // Back Button
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(_createRoute(const BaranguardWelcomePage()));
+                      },
+                    ),
                   ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Baranguard',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF154C79),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        _buildTextField(controller: _firstNameController, label: 'First Name:'),
-                        _buildTextField(controller: _lastNameController, label: 'Last Name:'),
-                        Row(
+                  const SizedBox(height: 10),
+
+                  // Form Container
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: _buildTextField(controller: _middleNameController, label: 'Middle Name:'),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                value: _selectedGender,
-                                decoration: InputDecoration(
-                                  labelText: 'Gender',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                ),
-                                items: ['Male', 'Female'].map((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedGender = value;
-                                  });
-                                },
+                            const Text(
+                              'Baranguard',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF154C79),
                               ),
                             ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Expanded(child: _buildTextField(controller: _suffixController, label: 'Suffix:')),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => _selectBirthday(context),
-                                child: AbsorbPointer(
-                                  child: TextField(
+                            const SizedBox(height: 20),
+                            _buildTextField(controller: _firstNameController, label: 'First Name:'),
+                            _buildTextField(controller: _lastNameController, label: 'Last Name:'),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTextField(controller: _middleNameController, label: 'Middle Name:'),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: _selectedGender,
                                     decoration: InputDecoration(
-                                      labelText: 'Birthdate',
+                                      labelText: 'Gender',
                                       filled: true,
                                       fillColor: Colors.white,
                                       border: OutlineInputBorder(
@@ -249,62 +242,103 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
                                         borderSide: BorderSide.none,
                                       ),
                                     ),
-                                    controller: TextEditingController(
-                                      text: _selectedBirthday != null
-                                          ? "${_selectedBirthday!.year}-${_selectedBirthday!.month.toString().padLeft(2, '0')}-${_selectedBirthday!.day.toString().padLeft(2, '0')}"
-                                          : '',
+                                    items: ['Male', 'Female'].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      if (mounted) {
+                                        setState(() {
+                                          _selectedGender = value;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                Expanded(child: _buildTextField(controller: _suffixController, label: 'Suffix:')),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => _selectBirthday(context),
+                                    child: AbsorbPointer(
+                                      child: TextField(
+                                        decoration: InputDecoration(
+                                          labelText: 'Birthdate',
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                        ),
+                                        controller: TextEditingController(
+                                          text: _selectedBirthday != null
+                                              ? "${_selectedBirthday!.year}-${_selectedBirthday!.month.toString().padLeft(2, '0')}-${_selectedBirthday!.day.toString().padLeft(2, '0')}"
+                                              : '',
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
+                              ],
+                            ),
+                            _buildTextField(controller: _mobileNumberController, label: 'Mobile Number:'),
+                            _buildTextField(controller: _emailController, label: 'Email Address:'),
+                            _buildMultilineTextField(controller: _homeAddressController, label: 'Complete Address:'),
+                            const SizedBox(height: 20),
+                            _buildTextField(controller: _usernameController, label: 'Username:'),
+                            _buildPasswordField(controller: _passwordController, label: 'Password:', obscureText: _obscurePassword, toggleVisibility: () {
+                              if (mounted) {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              }
+                            }),
+                            _buildPasswordField(controller: _confirmPasswordController, label: 'Confirm Password:', obscureText: _obscureConfirmPassword, toggleVisibility: () {
+                              if (mounted) {
+                                setState(() {
+                                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                                });
+                              }
+                            }),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.teal[800],
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
+                              ),
+                              onPressed: _isLoading ? null : _signUp,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                                  : const Text(
+                                'Register',
+                                style: TextStyle(color: Colors.white, fontSize: 18),
                               ),
                             ),
                           ],
                         ),
-                        _buildTextField(controller: _mobileNumberController, label: 'Mobile Number:'),
-                        _buildTextField(controller: _emailController, label: 'Email Address:'),
-                        _buildMultilineTextField(controller: _homeAddressController, label: 'Complete Address:'),
-                        const SizedBox(height: 20),
-                        _buildTextField(controller: _usernameController, label: 'Username:'),
-                        _buildPasswordField(controller: _passwordController, label: 'Password:', obscureText: _obscurePassword, toggleVisibility: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        }),
-                        _buildPasswordField(controller: _confirmPasswordController, label: 'Confirm Password:', obscureText: _obscureConfirmPassword, toggleVisibility: () {
-                          setState(() {
-                            _obscureConfirmPassword = !_obscureConfirmPassword;
-                          });
-                        }),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal[800],
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
-                          ),
-                          onPressed: _isLoading ? null : _signUp, // Disable button when loading
-                          child: _isLoading
-                              ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                              : const Text(
-                            'Register',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -372,4 +406,3 @@ class _BarangayRegistrationState extends State<BarangayRegistration> {
     );
   }
 }
-

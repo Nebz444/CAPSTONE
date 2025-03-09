@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../model/users_model.dart';
 import '../provider/user_provider.dart';
+import 'package:baranguard/formStatus/certificateStatus.dart';
 
 class BarangayCertificateForm extends StatefulWidget {
   final String formType;
@@ -25,9 +26,12 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
   final _houseNumberController = TextEditingController();
   final _streetController = TextEditingController();
   final _subdivisionController = TextEditingController();
+  final _purokController = TextEditingController();
   final _yearsResidedController = TextEditingController();
   final _otherPurposeController = TextEditingController();
 
+  String? _selectedsex = 'Male';
+  String? _selectedcivil_status = 'Single';
   String? _selectedPurpose = 'Local Employment';
   bool _showOtherPurposeField = false;
 
@@ -64,6 +68,9 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
               _buildConfirmationItem("Street", _streetController.text),
               _buildConfirmationItem("Subdivision",
                   _subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text),
+              _buildConfirmationItem("Purok", _purokController.text),
+              _buildConfirmationItem("Gender", _selectedsex ?? ''),
+              _buildConfirmationItem("Civil Status", _selectedcivil_status ?? ''),
               _buildConfirmationItem("Years Resided", _yearsResidedController.text),
               _buildConfirmationItem("Purpose", _selectedPurpose == 'Other'
                   ? _otherPurposeController.text
@@ -120,6 +127,9 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
         'subdivision': _subdivisionController.text.trim().isEmpty
             ? 'N/A'
             : _subdivisionController.text.trim(),
+        'purok': _purokController.text.trim(),
+        'sex': _selectedsex, // Ensure this matches the PHP backend's expected key
+        'civil_status': _selectedcivil_status,
         'years': _yearsResidedController.text.trim(),
         'usertype': _selectedPurpose!,
         'user_id': user!.id.toString(),
@@ -131,16 +141,27 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
       try {
         final response = await http.post(
           Uri.parse(apiUrl),
-          headers: {'Content-Type': 'application/json'}, // Change content type to JSON
-          body: jsonEncode(formData), // Encode the form data as JSON
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(formData),
         );
 
-        print("API Response: ${response.body}");
+        print("Raw API Response: ${response.body}"); // Log the raw response
+
+        if (response.body.isEmpty) {
+          throw FormatException("Empty response from server");
+        }
+
         final responseBody = jsonDecode(response.body);
 
         if (response.statusCode == 200 && responseBody['status'] == 'success') {
           _showSuccessMessage();
           _clearForm();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CertificateStatusPage(userId: int.parse(user!.id.toString())),
+            ),
+          );
         } else {
           _showErrorMessage(responseBody['message'] ?? "Failed to submit request.");
         }
@@ -160,6 +181,8 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
     );
   }
 
+
+
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -176,9 +199,12 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
     _houseNumberController.clear();
     _streetController.clear();
     _subdivisionController.clear();
+    _purokController.clear();
     _yearsResidedController.clear();
     _otherPurposeController.clear();
     setState(() {
+      _selectedsex = 'Male';
+      _selectedcivil_status = 'Single';
       _selectedPurpose = 'Local Employment';
       _showOtherPurposeField = false;
     });
@@ -211,7 +237,7 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
       backgroundColor: const Color(0xFF174A7C),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2D56),
-        title: Text(widget.formType),
+        iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
       ),
       body: Padding(
@@ -258,30 +284,77 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
   Widget _buildFormFields(bool isSmallScreen) {
     return Column(
       children: [
+        // First Name, Middle Name, Last Name
         buildTextField("First Name", _firstNameController),
         buildTextField("Middle Name", _middleNameController, required: false),
         buildTextField("Last Name", _lastNameController),
+
+        // House Number and Street
         Row(
           children: [
-            Expanded(child: buildTextField("Age", _ageController,
-                keyboardType: TextInputType.number)),
-            SizedBox(width: isSmallScreen ? 8 : 10),
-            Expanded(child: buildTextField("Birthday", _birthdayController,
-                readOnly: true, onTap: () => _selectDate(context))),
-          ],
-        ),
-        buildTextField("Birthplace", _birthplaceController),
-        Row(
-          children: [
-            Expanded(child: buildTextField("House Number", _houseNumberController)),
+            Expanded(child: buildTextField("House Number", _houseNumberController, keyboardType: TextInputType.phone)),
             SizedBox(width: isSmallScreen ? 8 : 10),
             Expanded(child: buildTextField("Street", _streetController)),
           ],
         ),
+
+        // Subdivision and Purok
         buildTextField("Subdivision (if any)", _subdivisionController, required: false),
+        buildTextField("Purok", _purokController, required: false),
+
+        // Birthday and Age
+        Row(
+          children: [
+            Expanded(child: buildTextField("Birthday", _birthdayController,
+                readOnly: true, onTap: () => _selectDate(context))),
+            SizedBox(width: isSmallScreen ? 8 : 10),
+            Expanded(child: buildTextField("Age", _ageController,
+                keyboardType: TextInputType.number)),
+          ],
+        ),
+
+        // Birthplace
+        buildTextField("Birthplace", _birthplaceController),
+
+        // Gender and Civil Status
+        Row(
+          children: [
+            Expanded(
+              child: buildDropdown(
+                "Gender",
+                _selectedsex,
+                ['Male', 'Female'],
+                    (newValue) {
+                  setState(() {
+                    _selectedsex = newValue;
+                  });
+                },
+              ),
+            ),
+            SizedBox(width: isSmallScreen ? 8 : 10),
+            Expanded(
+              child: buildDropdown(
+                "Civil Status",
+                _selectedcivil_status,
+                ['Single', 'Married', 'Widowed','Annulled'],
+                    (newValue) {
+                  setState(() {
+                    _selectedcivil_status = newValue;
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+
+        // Years Resided at Address
         buildTextField("Years Resided at Address", _yearsResidedController,
             keyboardType: TextInputType.number),
+
+        // Purpose Dropdown
         _buildPurposeDropdown(isSmallScreen),
+
+        // Other Purpose Field (if applicable)
         if (_showOtherPurposeField)
           AnimatedOpacity(
             duration: const Duration(milliseconds: 300),

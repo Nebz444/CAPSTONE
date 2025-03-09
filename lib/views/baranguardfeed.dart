@@ -23,7 +23,7 @@ class _BaranguardFeedState extends State<BaranguardFeed> {
 
   Future<void> fetchPosts() async {
     try {
-      final response = await http.get(Uri.parse('https://baranguard.shop/API/fetchPost.php'));
+      final response = await http.get(Uri.parse('https://manibaugparalaya.com/API/fetchPost.php'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

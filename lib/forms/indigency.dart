@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../model/users_model.dart'; // Ensure this import path is correct
 import '../provider/user_provider.dart'; // Ensure this import path is correct
+import 'package:baranguard/formStatus/indigencyStatus.dart';
 
 class IndigencyForm extends StatefulWidget {
   final String formType;
@@ -169,6 +170,12 @@ class _IndigencyFormState extends State<IndigencyForm> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Indigency form submitted successfully!")),
           );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => IndigencyStatusPage(userId: int.parse(user!.id.toString())),
+            ),
+          );
           _clearForm();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -208,6 +215,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2D56),
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -234,19 +242,34 @@ class _IndigencyFormState extends State<IndigencyForm> {
                 buildTextField("Name of the one who manages", _managerNameController),
                 Row(
                   children: [
-                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
-                  ],
-                ),
-                Row(
-                  children: [
                     Expanded(child: buildTextField("House Number", _houseNumberController)),
                     const SizedBox(width: 10),
                     Expanded(child: buildTextField("Street", _streetController)),
                   ],
                 ),
                 buildTextField("Subdivision (if any)", _subdivisionController, required: false),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(child: buildDropdown("Gender", _selectedGender, ['Male', 'Female'], (newValue) {
+                      setState(() {
+                        _selectedGender = newValue;
+                      });
+                    })),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Annulled'], (newValue) {
+                      setState(() {
+                        _selectedCivilStatus = newValue;
+                      });
+                    })),
+                  ],
+                ),
                 Row(
                   children: [
                     Expanded(child: buildTextField("Name of the Patient", _patientNameController)),
@@ -275,21 +298,6 @@ class _IndigencyFormState extends State<IndigencyForm> {
                         },
                       ),
                     ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: buildDropdown("Gender", _selectedGender, ['Male', 'Female'], (newValue) {
-                      setState(() {
-                        _selectedGender = newValue;
-                      });
-                    })),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Annulled'], (newValue) {
-                      setState(() {
-                        _selectedCivilStatus = newValue;
-                      });
-                    })),
                   ],
                 ),
                 buildTextField("Annual Income", _annualIncomeController, keyboardType: TextInputType.number), // Add annual income field

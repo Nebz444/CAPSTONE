@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../model/users_model.dart'; // Ensure this import path is correct
 import '../provider/user_provider.dart'; // Ensure this import path is correct
+import 'package:baranguard/formStatus/clearanceStatus.dart';
 
 class Clearance extends StatefulWidget {
   final String formType;
@@ -146,6 +147,12 @@ class _ClearanceState extends State<Clearance> {
             const SnackBar(content: Text("Barangay Clearance request submitted successfully!")),
           );
           _clearForm();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ClearanceStatusPage(userId: int.parse(user!.id.toString())),
+            ),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseBody['message'] ?? "Failed to submit request.")),
@@ -210,7 +217,7 @@ class _ClearanceState extends State<Clearance> {
       backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2D56),
-        title: Text(widget.formType),
+        iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
       ),
       body: Padding(

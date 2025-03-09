@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../model/users_model.dart'; // Ensure this import path is correct
 import '../provider/user_provider.dart'; // Ensure this import path is correct
+import 'complaintsstatus.dart'; // Import the ComplaintsStatusPage
 
 class ComplaintsForm extends StatefulWidget {
   @override
@@ -87,11 +88,11 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
         content: SingleChildScrollView(
           child: ListBody(
             children: [
+              Text('Complaint Type: ${_selectedComplaintType == 'Other' ? _otherComplaintController.text : _selectedComplaintType}'),
               Text('Name: ${_nameController.text}'),
               Text('House Number: ${_houseNumberController.text}'),
               Text('Street: ${_streetController.text}'),
               Text('Subdivision: ${_subdivisionController.text}'),
-              Text('Complaint Type: ${_selectedComplaintType == 'Other' ? _otherComplaintController.text : _selectedComplaintType}'),
               Text('Contact Number: ${_contactNumberController.text}'),
               Text('Narrative: ${_narrativeController.text}'),
               if (_imageFile != null) const Text('Photo: Attached'),
@@ -155,6 +156,14 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
             const SnackBar(content: Text("Complaint submitted successfully!")),
           );
           _clearForm();
+
+          // Navigate to ComplaintsStatusPage after successful submission
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ComplaintsStatusPage(userId: int.parse(user!.id.toString())),
+            ),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseBody['message'] ?? "Failed to submit complaint.")),
@@ -186,15 +195,22 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2D56),
         centerTitle: true,
         title: const Text('Complaint Request', style: TextStyle(fontSize: 20, color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white), // Make the back button white
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.05,
+          vertical: screenHeight * 0.02,
+        ),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -215,16 +231,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                buildTextField("Name", _nameController),
-                Row(
-                  children: [
-                    Expanded(child: buildTextField("House Number", _houseNumberController)),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildTextField("Street", _streetController)),
-                  ],
-                ),
-                buildTextField("Subdivision (if any)", _subdivisionController, required: false),
-                buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
+                // Complaint Type at the beginning
                 buildDropdown("Complaint Type", _selectedComplaintType, [
                   'Noise Complaint',
                   'Waste Complaint',
@@ -243,6 +250,17 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
                 }),
                 if (_showOtherComplaintField)
                   buildTextField("Please specify other complaint type", _otherComplaintController),
+                const SizedBox(height: 10),
+                buildTextField("Name", _nameController),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("House Number", _houseNumberController)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Street", _streetController)),
+                  ],
+                ),
+                buildTextField("Subdivision (if any)", _subdivisionController, required: false),
+                buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
                 const SizedBox(height: 10),
                 const Text(
                   'Description of Complaints (Optional):',
@@ -406,7 +424,7 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
             onChanged: onChanged,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please select $label';
+              return 'Please select $label';
               }
               return null;
             },
