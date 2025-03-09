@@ -90,7 +90,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
       };
 
       final response = await http.post(
-        Uri.parse('https://baranguard.shop/API/dartdb.php'),
+        Uri.parse('https://manibaugparalaya.com/API/dartdb.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestBody),
       );
