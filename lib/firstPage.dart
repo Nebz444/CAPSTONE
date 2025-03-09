@@ -86,7 +86,10 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
 
         return SlideTransition(
           position: offsetAnimation,
-          child: child,
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
         );
       },
     );

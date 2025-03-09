@@ -27,6 +27,7 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
   String? _selectedGender;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _termsAgreed = false;
 
   // Animation Controller
   late AnimationController _controller;
@@ -41,10 +42,274 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
     );
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
+    Future.delayed(Duration.zero, () => _showTermsDialog());
+  }
+
+  void _showTermsDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        bool agree = false;
+        bool notAgree = false;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.blue[100],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Center(
+                child: Text(
+                  "Terms of Agreement",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[900],
+                  ),
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "By clicking 'Agree' or signing up for this service, you acknowledge that you have read, understood, and agree to be bound by these Terms of Agreement, as well as our ",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        _showPrivacyPolicy();
+                      },
+                      child: const Text(
+                        "Privacy Policy",
+                        style: TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      ". If you do not agree to these terms, please do not use our application.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Column(
+                          children: [
+                            const Text("Not Agree"),
+                            Checkbox(
+                              value: notAgree,
+                              onChanged: (value) {
+                                setState(() {
+                                  notAgree = value!;
+                                  agree = false;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 40),
+                        Column(
+                          children: [
+                            const Text("Agree"),
+                            Checkbox(
+                              value: agree,
+                              onChanged: (value) {
+                                setState(() {
+                                  agree = value!;
+                                  notAgree = false;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: (agree || notAgree)
+                          ? () {
+                        if (agree) {
+                          setState(() {
+                            _termsAgreed = true;
+                          });
+                          Navigator.of(context).pop();
+                        } else if (notAgree) {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => const BaranguardWelcomePage(),
+                            ),
+                          );
+                        }
+                      }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      ),
+                      child: const Text(
+                        "Submit",
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showPrivacyPolicy() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.blue[100],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Center(
+            child: Text(
+              "Privacy Policy",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue[900],
+              ),
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "1. We value your privacy and are committed to protecting your personal information. "
+                      "This privacy policy explains how we collect, use, and share information about you when you use our services.",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "2. Information We Collect",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue[900]),
+                ),
+                Text(
+                  "We may collect the following types of information:\n"
+                      "- Personal identification information (name, email address, phone number)\n"
+                      "- Location data (IP address, GPS data)",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "3. How We Use Your Information",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue[900]),
+                ),
+                Text(
+                  "We use the information we collect to:\n"
+                      "- Maintain a record of users in our mobile application.\n"
+                      "- Facilitate the signup process for barangay forms.\n"
+                      "- Communicate with you.\n"
+                      "- Enable users to file complaints or reports with the barangay efficiently.",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "4. Sharing Your Information",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue[900]),
+                ),
+                Text(
+                  "We may share your information with:\n"
+                      "- Service providers (to perform functions on our behalf)\n"
+                      "- Legal authorities (if required by law)",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "5. Your Choices",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue[900]),
+                ),
+                Text(
+                  "You have the right to:\n"
+                      "- Access and update your information\n"
+                      "- Opt-out of certain data collection practices\n"
+                      "- Request the deletion of your data",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "6. Security",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue[900]),
+                ),
+                Text(
+                  "We implement appropriate technical and organizational measures to protect your information from unauthorized access, disclosure, alteration, and destruction.",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "7. Changes to This Policy",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue[900]),
+                ),
+                Text(
+                  "We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on our website.",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "8. Contact Us",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue[900]),
+                ),
+                Text(
+                  "If you have any questions about this privacy policy, please contact us at Baranguardapp@gmail.com",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[800]),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showTermsDialog();
+              },
+              child: Text(
+                "Back to Terms",
+                style: TextStyle(
+                  color: Colors.blue[800],
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _signUp() async {
-    if (_isLoading || !mounted) return;
+    if (_isLoading || !mounted || !_termsAgreed) return;
 
     setState(() {
       _isLoading = true;
@@ -106,7 +371,6 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
 
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
-        print("Response: $responseBody");
 
         if (responseBody['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -119,13 +383,11 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
           );
         }
       } else {
-        print("Error: ${response.statusCode} - ${response.body}");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: ${response.statusCode}")),
         );
       }
     } catch (e) {
-      print("Error during sign-up: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("An error occurred. Please try again.")),
       );
@@ -178,8 +440,8 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => !_isLoading,
+    return PopScope(
+      canPop: !_isLoading,
       child: Scaffold(
         backgroundColor: const Color(0xFF154C79),
         body: SafeArea(
@@ -238,9 +500,8 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
                                       filled: true,
                                       fillColor: Colors.white,
                                       border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide.none,
-                                      ),
+                                          borderRadius: BorderRadius.circular(10),
+                                          borderSide: BorderSide.none),
                                     ),
                                     items: ['Male', 'Female'].map((String value) {
                                       return DropdownMenuItem<String>(
@@ -273,9 +534,8 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
                                           filled: true,
                                           fillColor: Colors.white,
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide.none,
-                                          ),
+                                              borderRadius: BorderRadius.circular(10),
+                                              borderSide: BorderSide.none),
                                         ),
                                         controller: TextEditingController(
                                           text: _selectedBirthday != null
