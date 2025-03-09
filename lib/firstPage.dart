@@ -118,11 +118,12 @@ class _BaranguardWelcomePageState extends State<BaranguardWelcomePage> {
                   children: [
                     const SizedBox(height: 20),
                     const Text(
-                      'Baranguard',
+                      'baranguard',
                       style: TextStyle(
                         fontSize: 50,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
+                        fontFamily: 'BebasNeue',
                       ),
                     ),
                     const SizedBox(height: 20),

@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:baranguard/views/account_settings_page.dart';
 import 'package:baranguard/views/change_password_page.dart'; // Import the new ChangePasswordPage
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart'; // Add this import for file storage
+import 'dart:io'; // For file operations
+import 'package:open_file/open_file.dart';
+
+
+import 'package:url_launcher/url_launcher.dart';
+
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -8,8 +18,38 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _notificationsEnabled = true;
-  bool _darkModeEnabled = false;
+  Future<void> fetchUpdate(BuildContext context) async {
+    final apiUrl = 'https://manibaugparalaya.com/API/fetch_updater.php';
+    final dio = Dio();
+
+    try {
+      // Fetch file URL from API
+      final response = await dio.get(apiUrl);
+
+      if (response.statusCode != 200) {
+        throw Exception("Failed to fetch update: ${response.statusCode}");
+      }
+
+      final data = response.data is String ? jsonDecode(response.data) : response.data;
+
+      if (data == null || !data.containsKey('link')) {
+        throw Exception("No valid file URL found in response");
+      }
+
+      final fileUrl = data['link']; // Google Drive or direct download link
+
+      // Open the link in browser
+      if (await canLaunchUrl(Uri.parse(fileUrl))) {
+        await launchUrl(Uri.parse(fileUrl), mode: LaunchMode.externalApplication);
+      } else {
+        throw Exception("Could not open the link");
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${error.toString()}")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +103,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 // Navigate to Help & Support Page
               },
             ),
+            _buildListTile( // put it here the update button
+              title: 'Check for Updates',
+              icon: Icons.system_update,
+              onTap: () => fetchUpdate(context),
+            ),
             _buildListTile(
               title: 'About Us',
               icon: Icons.info,
@@ -86,22 +131,6 @@ class _SettingsPageState extends State<SettingsPage> {
           fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
-      ),
-    );
-  }
-
-  Widget _buildSwitchListTile({
-    required String title,
-    required bool value,
-    required Function(bool) onChanged,
-  }) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: SwitchListTile(
-        title: Text(title),
-        value: value,
-        onChanged: onChanged,
-        activeColor: const Color(0xFF154C79),
       ),
     );
   }

@@ -217,19 +217,6 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D2D56),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    "Complaint Form",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
                 const SizedBox(height: 20),
                 // Complaint Type at the beginning
                 buildDropdown("Complaint Type", _selectedComplaintType, [
@@ -356,7 +343,6 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
       ),
     );
   }
-
   Widget buildTextField(String label, TextEditingController controller, {TextInputType? keyboardType, bool required = true}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),

@@ -5,16 +5,19 @@ import 'views/account_settings_page.dart'; // Import Account Settings Page
 import 'package:baranguard/firstPage.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter binding is initialized
+
   runApp(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => UserProvider()),
-          //If you want to add provider
-        ],
-        child: MyApp()
-      )
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        // Add more providers if needed
+      ],
+      child: MyApp(),
+    ),
   );
 }
+
 
 class MyApp extends StatelessWidget {
   @override
