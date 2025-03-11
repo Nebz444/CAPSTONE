@@ -247,7 +247,7 @@ class _BarangayIDState extends State<BarangayID> {
                 buildTextField("Last Name", _lastNameController),
                 Row(
                   children: [
-                    Expanded(child: buildTextField("House Number", _houseNumberController, keyboardType: TextInputType.number)),
+                    Expanded(child: buildTextField("House Number", _houseNumberController)),
                     const SizedBox(width: 10),
                     Expanded(child: buildTextField("Street", _streetController)),
                   ],

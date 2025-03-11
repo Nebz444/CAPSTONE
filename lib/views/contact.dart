@@ -1,5 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart'; // For Clipboard
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Emergency Hotlines',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const ContactPage(),
+    );
+  }
+}
 
 class ContactPage extends StatelessWidget {
   const ContactPage({super.key});
@@ -43,29 +63,48 @@ class ContactItem extends StatelessWidget {
   const ContactItem({super.key, required this.provider, required this.contact});
 
   Future<void> _makeCall(BuildContext context, String number) async {
-    final Uri url = Uri.parse('tel:$number');
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Call Confirmation'),
-        content: Text('Do you want to call $number?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url);
-              }
-            },
-            child: const Text('Call'),
-          ),
-        ],
-      ),
-    );
+    // Clean the phone number by removing special characters
+    String cleanNumber = number.replaceAll(RegExp(r'[^0-9+]'), '');
+    final Uri url = Uri.parse('tel:$cleanNumber');
+
+    print('Attempting to call: $cleanNumber');
+
+    try {
+      // Check if the device can handle the tel: URL scheme
+      if (await canLaunchUrl(url)) {
+        print('Launching call...');
+        await launchUrl(url);
+      } else {
+        print('Could not launch $url');
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      print('Error making call: $e');
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text('Unable to make a call. Error: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Copy the number to the clipboard
+                Clipboard.setData(ClipboardData(text: cleanNumber));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Number copied to clipboard')),
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Copy Number'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -85,7 +124,10 @@ class ContactItem extends StatelessWidget {
                 children: [
                   Text(
                     provider,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   const SizedBox(height: 5),
                   GestureDetector(
@@ -100,7 +142,10 @@ class ContactItem extends StatelessWidget {
                       child: Text(
                         contact,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black),
                       ),
                     ),
                   ),

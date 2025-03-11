@@ -4,18 +4,18 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../model/users_model.dart'; // Ensure this import path is correct
 import '../provider/user_provider.dart'; // Ensure this import path is correct
-import 'package:baranguard/formStatus/cedulaStatus.dart';
+import 'package:baranguard/formStatus/cedulaStatus.dart'; // Ensure this import path is correct
 
-class CedulaForm extends StatefulWidget {
+class Cedula extends StatefulWidget {
   final String formType;
 
-  const CedulaForm({required this.formType});
+  const Cedula({required this.formType});
 
   @override
-  _CedulaFormState createState() => _CedulaFormState();
+  _CedulaState createState() => _CedulaState();
 }
 
-class _CedulaFormState extends State<CedulaForm> {
+class _CedulaState extends State<Cedula> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _middleNameController = TextEditingController();
@@ -23,7 +23,13 @@ class _CedulaFormState extends State<CedulaForm> {
   final _houseNumberController = TextEditingController();
   final _streetController = TextEditingController();
   final _subdivisionController = TextEditingController();
+  final _ageController = TextEditingController();
+  final _birthplaceController = TextEditingController();
+  final _heightController = TextEditingController();
+  final _weightController = TextEditingController();
   final _contactNumberController = TextEditingController();
+  final _emergencyNumberController = TextEditingController();
+  final _birthdayController = TextEditingController();
 
   String? _selectedGender = 'Male';
   String? _selectedCivilStatus = 'Single';
@@ -58,9 +64,15 @@ class _CedulaFormState extends State<CedulaForm> {
               Text("House Number: ${_houseNumberController.text}"),
               Text("Street: ${_streetController.text}"),
               Text("Subdivision: ${_subdivisionController.text.isEmpty ? 'N/A' : _subdivisionController.text}"),
+              Text("Age: ${_ageController.text}"),
+              Text("Birthday: ${_birthdayController.text}"),
+              Text("Birthplace: ${_birthplaceController.text}"),
               Text("Gender: $_selectedGender"),
               Text("Civil Status: $_selectedCivilStatus"),
+              Text("Height: ${_heightController.text} cm"),
+              Text("Weight: ${_weightController.text} kg"),
               Text("Contact Number: ${_contactNumberController.text}"),
+              Text("Emergency Contact: ${_emergencyNumberController.text}"),
             ],
           ),
         ),
@@ -86,9 +98,9 @@ class _CedulaFormState extends State<CedulaForm> {
 
   Future<void> submitForm() async {
     if (_formKey.currentState!.validate()) {
-      const apiUrl = 'https://manibaugparalaya.com/API/cedula.php';
+      const apiUrl = 'https://manibaugparalaya.com/API/cedula.php'; // Updated API endpoint
 
-      // Prepare form data as a JSON object
+      // Prepare form data
       final Map<String, dynamic> formData = {
         'firstName': _firstNameController.text.trim(),
         'middleName': _middleNameController.text.trim(),
@@ -98,26 +110,37 @@ class _CedulaFormState extends State<CedulaForm> {
         'subdivision': _subdivisionController.text.trim().isEmpty
             ? 'N/A'
             : _subdivisionController.text.trim(),
-        'gender': _selectedGender ?? 'Male',
-        'civil_status': _selectedCivilStatus ?? 'Single',
+        'age': _ageController.text.trim(),
+        'gender': _selectedGender ?? 'Male''Female',
+        'civil_status': _selectedCivilStatus ?? 'Single''Married''Widowed''Annulled',
+        'birthplace': _birthplaceController.text.trim(),
+        'birthday': _birthdayController.text.trim(),
+        'height': _heightController.text.trim(),
+        'weight': _weightController.text.trim(),
         'contact_number': _contactNumberController.text.trim(),
+        'emergency_number': _emergencyNumberController.text.trim(),
         'user_id': user!.id.toString(),
       };
 
-      try {
-        print("Submitting form to $apiUrl...");
-        print("Form Data: ${jsonEncode(formData)}");
+      // Debug: Print the request payload
+      print("Request Payload: $formData");
 
+      try {
         final response = await http.post(
           Uri.parse(apiUrl),
-          headers: {'Content-Type': 'application/json'}, // Set content type to JSON
-          body: jsonEncode(formData), // Encode the data as JSON
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: formData,
         );
 
-        print("Response Status Code: ${response.statusCode}");
-        print("Response Body: ${response.body}");
+        final responseString = response.body;
+        print("Raw API Response: $responseString"); // Debugging line
 
-        final responseBody = jsonDecode(response.body);
+        // Check if the response is valid JSON
+        if (responseString.trim().isEmpty) {
+          throw FormatException("Empty response from server");
+        }
+
+        final responseBody = jsonDecode(responseString);
 
         if (response.statusCode == 200 && responseBody['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -135,6 +158,11 @@ class _CedulaFormState extends State<CedulaForm> {
             SnackBar(content: Text(responseBody['message'] ?? "Failed to submit request.")),
           );
         }
+      } on FormatException catch (e) {
+        print("JSON Decode Error: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid response from the server. Please try again.")),
+        );
       } catch (e) {
         print("Error: $e");
         ScaffoldMessenger.of(context).showSnackBar(
@@ -151,11 +179,34 @@ class _CedulaFormState extends State<CedulaForm> {
     _houseNumberController.clear();
     _streetController.clear();
     _subdivisionController.clear();
+    _ageController.clear();
+    _birthplaceController.clear();
+    _heightController.clear();
+    _weightController.clear();
     _contactNumberController.clear();
+    _emergencyNumberController.clear();
+    _birthdayController.clear();
     setState(() {
       _selectedGender = 'Male';
       _selectedCivilStatus = 'Single';
     });
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        _birthdayController.text =
+        "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+        _ageController.text = (DateTime.now().year - pickedDate.year).toString();
+      });
+    }
   }
 
   @override
@@ -196,12 +247,20 @@ class _CedulaFormState extends State<CedulaForm> {
                 buildTextField("Last Name", _lastNameController),
                 Row(
                   children: [
-                    Expanded(child: buildTextField("House Number", _houseNumberController, keyboardType: TextInputType.number)),
+                    Expanded(child: buildTextField("House Number", _houseNumberController)),
                     const SizedBox(width: 10),
                     Expanded(child: buildTextField("Street", _streetController)),
                   ],
                 ),
                 buildTextField("Subdivision (if any)", _subdivisionController, required: false),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
+                  ],
+                ),
+                buildTextField("Birthplace", _birthplaceController),
                 Row(
                   children: [
                     Expanded(child: buildDropdown("Gender", _selectedGender, ['Male', 'Female'], (newValue) {
@@ -210,14 +269,22 @@ class _CedulaFormState extends State<CedulaForm> {
                       });
                     })),
                     const SizedBox(width: 10),
-                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Anulled'], (newValue) {
+                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Annulled'], (newValue) {
                       setState(() {
                         _selectedCivilStatus = newValue;
                       });
                     })),
                   ],
                 ),
+                Row(
+                  children: [
+                    Expanded(child: buildTextField("Height (cm)", _heightController, keyboardType: TextInputType.number)),
+                    const SizedBox(width: 10),
+                    Expanded(child: buildTextField("Weight (kg)", _weightController, keyboardType: TextInputType.number)),
+                  ],
+                ),
                 buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
+                buildTextField("Emergency Contact", _emergencyNumberController),
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(

@@ -22,7 +22,7 @@ class RequestPage extends StatelessWidget {
           children: [
             buildRequestButton(context, 'Barangay ID', BarangayID(formType: 'Barangay ID')),
             const SizedBox(height: 10),
-            buildRequestButton(context, 'Cedula', CedulaForm(formType: 'Cedula')),
+            buildRequestButton(context, 'Cedula', Cedula(formType: 'Cedula')),
             const SizedBox(height: 10),
             buildRequestButton(context, 'Barangay Certificate', BarangayCertificateForm(formType: 'Barangay Certificate')),
             const SizedBox(height: 10),
