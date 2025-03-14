@@ -83,7 +83,9 @@ flutter:
   assets:
     - lib/images/Logo.png
     - lib/images/default_profile.png
-
+    - lib/images/repBG.png
+    - lib/images/comBG.png
+    - lib/images/reqBG.png
 
 
 

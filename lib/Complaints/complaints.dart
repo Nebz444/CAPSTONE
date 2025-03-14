@@ -42,7 +42,6 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
 
-    // Show a dialog to choose between camera and gallery
     final source = await showDialog<ImageSource>(
       context: context,
       builder: (context) => AlertDialog(
@@ -52,10 +51,6 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
           TextButton(
             onPressed: () => Navigator.pop(context, ImageSource.camera),
             child: const Text('Camera'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, ImageSource.gallery),
-            child: const Text('Gallery'),
           ),
         ],
       ),

@@ -1,73 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
-import 'complaintsstatus.dart'; // Import the ReportPage class
-import 'complaints.dart';
+import 'complaintsstatus.dart'; // Import the ComplaintsStatusPage class
+import 'complaints.dart'; // Import the ComplaintsForm class
 
 class ComplaintsFirstpage extends StatelessWidget {
   const ComplaintsFirstpage({super.key});
 
   @override
   Widget build(BuildContext context) {
+
+    double imageOpacity = 0.3; // Set the desired opacity value
+
     return Scaffold(
-      backgroundColor: const Color(0xFF154068), // Dark blue background
       appBar: AppBar(
-        title: const Text('', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF154068),
-        elevation: 0,
+        backgroundColor: const Color(0xFF0D2D56), // Dark blue matching the design
+        title: const Text('Complaints', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
-        child: Column(
+      body: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade900,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(
-                child: Text(
-                  "Complaints",
-                  style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+            // Background Image with Opacity
+            Positioned(
+              left: -23, // Adjust horizontal position (distance from the left)
+              top: 180, // Adjust vertical position (distance from the top)
+              child: Opacity(
+                opacity: imageOpacity, // Adjust opacity here (0.0 to 1.0)
+                child: Container(
+                  width: 450,
+                  height: 300,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('lib/images/comBG.png'), // Path to your image
+                      fit: BoxFit.cover, // Cover the entire screen
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 30),
-            _buildComplaintsButton("Complaints", context, ComplaintsForm()), // Navigate to ReportPage
-            const SizedBox(height: 20),
-            _buildComplaintsStatusButton(context), // Fetch userId before navigating
-          ],
-        ),
+
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildComplaintsButton(context, 'Submit a Complaint', ComplaintsForm()),
+                  const SizedBox(height: 10),
+                  _buildComplaintsStatusButton(context),
+                ],
+              ),
+            ),
+          ]
       ),
     );
   }
 
-  Widget _buildComplaintsButton(String text, BuildContext context, Widget page) {
-    return GestureDetector(
-      onTap: () {
+  Widget _buildComplaintsButton(BuildContext context, String text, Widget page) {
+    return ElevatedButton(
+      onPressed: () {
         Navigator.push(context, MaterialPageRoute(builder: (context) => page));
       },
-      child: Container(
-        width: double.infinity,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue.shade900, // Button background color
         padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(30),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // Rounded corners
         ),
-        child: Center(
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-        ),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 18, color: Colors.white),
       ),
     );
   }
 
   Widget _buildComplaintsStatusButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
+    return ElevatedButton(
+      onPressed: () async {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         int? userId = prefs.getInt('user_id'); // Retrieve userId
 
@@ -85,19 +93,16 @@ class ComplaintsFirstpage extends StatelessWidget {
           );
         }
       },
-      child: Container(
-        width: double.infinity,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue.shade900, // Button background color
         padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(30),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // Rounded corners
         ),
-        child: const Center(
-          child: Text(
-            "Complaints Status",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-        ),
+      ),
+      child: const Text(
+        'Complaints Status',
+        style: TextStyle(fontSize: 18, color: Colors.white),
       ),
     );
   }
