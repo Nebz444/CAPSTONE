@@ -279,6 +279,7 @@ class _IndigencyFormState extends State<IndigencyForm> {
                         "Relation to the Patient",
                         _relationController.text.isEmpty ? null : _relationController.text,
                         [
+                          'Myself',
                           'Spouse',
                           'Mother',
                           'Father',
@@ -305,11 +306,9 @@ class _IndigencyFormState extends State<IndigencyForm> {
                   'Medical and Financial',
                   'Medical',
                   'Financial',
-                  'Burial',
-                  'Correction',
-                  'Senior Citizen',
-                  'Public Attorney\'s Office',
-                  'Scholar',
+                  'Student Assistance',
+                  'Food And Financial Assistance',
+                  'Food Assistance',
                   'Other',
                 ], (newValue) {
                   setState(() {

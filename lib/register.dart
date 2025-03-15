@@ -22,12 +22,15 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
   final TextEditingController _mobileNumberController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _homeAddressController = TextEditingController();
+  final TextEditingController _beneficiaryNumberController = TextEditingController();
   DateTime? _selectedBirthday;
   bool _isLoading = false;
   String? _selectedGender;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _termsAgreed = false;
+  bool _isBeneficiary = false;
+  List<String> _selectedBeneficiaryTypes = [];
 
   // Animation Controller
   late AnimationController _controller;
@@ -62,13 +65,12 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
               ),
               title: Center(
                 child: Text(
-                  "Terms of Agreement",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue[900],
-                  ),
-                ),
+                    "Terms of Agreement",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[900],
+                    )),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -194,13 +196,12 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
           ),
           title: Center(
             child: Text(
-              "Privacy Policy",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue[900],
-              ),
-            ),
+                "Privacy Policy",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue[900],
+                )),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -315,6 +316,9 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
       _isLoading = true;
     });
 
+    // Debug: Print selected beneficiary types
+    print("Selected Beneficiary Types: $_selectedBeneficiaryTypes");
+
     String lastName = _lastNameController.text.trim();
     String firstName = _firstNameController.text.trim();
     String middleName = _middleNameController.text.trim();
@@ -327,6 +331,11 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
     String email = _emailController.text.trim();
     String homeAddress = _homeAddressController.text.trim();
     String gender = _selectedGender ?? '';
+    String beneficiaryNumber = _beneficiaryNumberController.text.trim();
+    String beneficiaryList = _selectedBeneficiaryTypes.join(", "); // Convert list to comma-separated string
+
+    // Debug: Print the final beneficiary list
+    print("Beneficiary List: $beneficiaryList");
 
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -366,8 +375,14 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
           'email_address': email,
           'home_address': homeAddress,
           'gender': gender,
+          'is_beneficiary': _isBeneficiary ? 1 : 0,
+          'beneficiary_number': beneficiaryNumber.isNotEmpty ? beneficiaryNumber : null,
+          'beneficiary_list': beneficiaryList.isNotEmpty ? beneficiaryList : null, // Send beneficiary list
         }),
       );
+
+      // Debug: Print the API response
+      print("API Response: ${response.body}");
 
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
@@ -388,6 +403,8 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
         );
       }
     } catch (e) {
+      // Debug: Print any errors
+      print("Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("An error occurred. Please try again.")),
       );
@@ -567,6 +584,69 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
                                 });
                               }
                             }),
+                            const SizedBox(height: 20),
+                            // Beneficiary Checkbox
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: _isBeneficiary,
+                                  onChanged: (value) {
+                                    if (mounted) {
+                                      setState(() {
+                                        _isBeneficiary = value!;
+                                      });
+                                    }
+                                  },
+                                ),
+                                const Text('Are you a beneficiary?'),
+                              ],
+                            ),
+                            // Beneficiary Dropdown
+                            if (_isBeneficiary) ...[
+                              DropdownButtonFormField<String>(
+                                value: null,
+                                decoration: InputDecoration(
+                                  labelText: 'Select Beneficiary Type',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide.none),
+                                ),
+                                items: ['4PS', 'Single Parent', 'PWD', 'Senior Citizen', 'AKAP', 'TUPAD'].map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  if (mounted) {
+                                    setState(() {
+                                      if (!_selectedBeneficiaryTypes.contains(value)) {
+                                        _selectedBeneficiaryTypes.add(value!); // Add selected value to the list
+                                      }
+                                    });
+                                  }
+                                },
+                              ),
+                              // Display selected beneficiary types with remove option
+                              Wrap(
+                                children: _selectedBeneficiaryTypes.map((type) {
+                                  return Chip(
+                                    label: Text(type),
+                                    onDeleted: () {
+                                      if (mounted) {
+                                        setState(() {
+                                          _selectedBeneficiaryTypes.remove(type);
+                                        });
+                                      }
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                              // Beneficiary Number
+                              _buildTextField(controller: _beneficiaryNumberController, label: 'Beneficiary Number:'),
+                            ],
                             const SizedBox(height: 20),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(

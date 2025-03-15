@@ -1,25 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/services.dart'; // For Clipboard
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Emergency Hotlines',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const ContactPage(),
-    );
-  }
-}
 
 class ContactPage extends StatelessWidget {
   const ContactPage({super.key});
@@ -62,49 +42,42 @@ class ContactItem extends StatelessWidget {
 
   const ContactItem({super.key, required this.provider, required this.contact});
 
+  String _formatPhoneNumber(String number) {
+    return number.replaceAll(RegExp(r'[^0-9+]'), '');
+  }
+
   Future<void> _makeCall(BuildContext context, String number) async {
-    // Clean the phone number by removing special characters
-    String cleanNumber = number.replaceAll(RegExp(r'[^0-9+]'), '');
-    final Uri url = Uri.parse('tel:$cleanNumber');
-
-    print('Attempting to call: $cleanNumber');
-
-    try {
-      // Check if the device can handle the tel: URL scheme
-      if (await canLaunchUrl(url)) {
-        print('Launching call...');
-        await launchUrl(url);
-      } else {
-        print('Could not launch $url');
-        throw 'Could not launch $url';
-      }
-    } catch (e) {
-      print('Error making call: $e');
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: Text('Unable to make a call. Error: $e'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Copy the number to the clipboard
-                Clipboard.setData(ClipboardData(text: cleanNumber));
+    final Uri url = Uri.parse('tel:${_formatPhoneNumber(number)}');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Call Confirmation'),
+        content: Text('Do you want to call $number?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url);
+                } else {
+                  throw 'Could not launch $url';
+                }
+              } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Number copied to clipboard')),
+                  SnackBar(content: Text('Failed to make the call: $e')),
                 );
-                Navigator.pop(context);
-              },
-              child: const Text('Copy Number'),
-            ),
-          ],
-        ),
-      );
-    }
+              }
+            },
+            child: const Text('Call'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -113,46 +86,19 @@ class ContactItem extends StatelessWidget {
       color: Colors.blue[700],
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Row(
-          children: [
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    provider,
-                    style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                  const SizedBox(height: 5),
-                  GestureDetector(
-                    onTap: () => _makeCall(context, contact),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        contact,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(10),
+        title: Text(
+          provider,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        subtitle: Text(
+          contact,
+          style: const TextStyle(fontSize: 14, color: Colors.white),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.phone, color: Colors.green),
+          onPressed: () => _makeCall(context, contact),
         ),
       ),
     );

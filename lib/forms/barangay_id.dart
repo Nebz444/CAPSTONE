@@ -30,6 +30,7 @@ class _BarangayIDState extends State<BarangayID> {
   final _contactNumberController = TextEditingController();
   final _emergencyNumberController = TextEditingController();
   final _birthdayController = TextEditingController();
+  final _yearsController = TextEditingController();
 
   String? _selectedGender = 'Male';
   String? _selectedCivilStatus = 'Single';
@@ -71,6 +72,7 @@ class _BarangayIDState extends State<BarangayID> {
               Text("Civil Status: $_selectedCivilStatus"),
               Text("Height: ${_heightController.text} cm"),
               Text("Weight: ${_weightController.text} kg"),
+              Text("Years: ${_yearsController.text}"),
               Text("Contact Number: ${_contactNumberController.text}"),
               Text("Emergency Contact: ${_emergencyNumberController.text}"),
             ],
@@ -111,12 +113,13 @@ class _BarangayIDState extends State<BarangayID> {
             ? 'N/A'
             : _subdivisionController.text.trim(),
         'age': _ageController.text.trim(),
-        'gender': _selectedGender ?? 'Male''Female',
-        'civil_status': _selectedCivilStatus ?? 'Single''Married''Widowed''Annulled',
+        'gender': _selectedGender ?? 'Male',
+        'civil_status': _selectedCivilStatus ?? 'Single',
         'birthplace': _birthplaceController.text.trim(),
         'birthday': _birthdayController.text.trim(),
         'height': _heightController.text.trim(),
         'weight': _weightController.text.trim(),
+        'years': _yearsController.text.trim(),
         'contact_number': _contactNumberController.text.trim(),
         'emergency_number': _emergencyNumberController.text.trim(),
         'user_id': user!.id.toString(),
@@ -186,6 +189,7 @@ class _BarangayIDState extends State<BarangayID> {
     _contactNumberController.clear();
     _emergencyNumberController.clear();
     _birthdayController.clear();
+    _yearsController.clear();
     setState(() {
       _selectedGender = 'Male';
       _selectedCivilStatus = 'Single';
@@ -283,6 +287,7 @@ class _BarangayIDState extends State<BarangayID> {
                     Expanded(child: buildTextField("Weight (kg)", _weightController, keyboardType: TextInputType.number)),
                   ],
                 ),
+                buildTextField("Years Resided", _yearsController, keyboardType: TextInputType.number), // Added "Years Resided"
                 buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
                 buildTextField("Emergency Contact", _emergencyNumberController),
                 const SizedBox(height: 20),
