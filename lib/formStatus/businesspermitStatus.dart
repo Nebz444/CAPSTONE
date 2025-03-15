@@ -22,38 +22,171 @@ class _BusinessPermitStatusPageState extends State<BusinessPermitStatusPage> {
   }
 
   Future<void> fetchBusinessPermitRequests() async {
-    final url = Uri.parse('https://manibaugparalaya.com/API/getBusinessPermit.php?user_id=${widget.userId}');
+    final url1 = Uri.parse('https://manibaugparalaya.com/API/getBusinessPermit.php?user_id=${widget.userId}');
+    final url2 = Uri.parse('https://manibaugparalaya.com/API/getBusinessPermit1.php?user_id=${widget.userId}');
 
     try {
       print("Fetching Business Permit data for user_id: ${widget.userId}");
-      final response = await http.get(url);
 
-      print("Status Code: ${response.statusCode}");
-      print("Response Body: ${response.body}");
+      final response1 = await http.get(url1);
+      final response2 = await http.get(url2);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print("Decoded API Response: ${json.encode(data)}");
+      print("Response1 Status: ${response1.statusCode}");
+      print("Response2 Status: ${response2.statusCode}");
 
-        if (data is Map && data.containsKey("message")) {
-          print("API Message: ${data["message"]}");
-          setState(() {
-            businessPermitRequests = [];
-            isLoading = false;
-          });
-        } else {
-          setState(() {
-            businessPermitRequests = data;
-            isLoading = false;
-          });
-        }
-      } else {
-        throw Exception("Failed to load Business Permit requests");
+      List businessPermitRequests = [];
+
+      if (response1.statusCode == 200) {
+        final data1 = json.decode(response1.body);
+        print("Response1 Data: \${json.encode(data1)}");
+        if (data1 is List) businessPermitRequests.addAll(data1);
       }
+
+      if (response2.statusCode == 200) {
+        final data2 = json.decode(response2.body);
+        print("Response2 Data: \${json.encode(data2)}");
+        if (data2 is List) businessPermitRequests.addAll(data2);
+      }
+
+      setState(() {
+        this.businessPermitRequests = businessPermitRequests;
+        isLoading = false;
+      });
     } catch (error) {
       print("Error fetching Business Permit requests: $error");
       setState(() => isLoading = false);
     }
+  }
+
+  Future<void> _addNote(int index, int userId, int id, String note) async {
+    final url = Uri.parse('https://manibaugparalaya.com/API/note2.php');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: {
+          'user_id': userId.toString(),
+          'id': id.toString(),
+          'note': note,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['status'] == 'success') {
+          setState(() {
+            businessPermitRequests[index]['note'] = note;
+          });
+          await fetchBusinessPermitRequests();
+        } else {
+          print("❌ Failed to add note: ${responseData['message']}");
+        }
+      } else {
+        print("❌ Server error: ${response.statusCode}");
+      }
+    } catch (error) {
+      print("❌ Error sending request: $error");
+    }
+  }
+
+  void _showAddNoteDialog(int index, int userId, int id) {
+    TextEditingController noteController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Add Note"),
+          content: TextField(
+            controller: noteController,
+            decoration: InputDecoration(hintText: "Enter note"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                _addNote(index, userId, id, noteController.text);
+                Navigator.pop(context);
+              },
+              child: Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBusinessPermitEntry(dynamic request, int index) {
+    String businessName = request['business_name'] ?? 'Unknown';
+    String ownerName = request['owner_name'] ?? 'Unknown';
+    String houseNumber = request['house_number'] ?? 'N/A';
+    String street = request['street'] ?? 'N/A';
+    String subdivision = request['subdivision'] ?? 'N/A';
+    String businessType = request['business_type'] ?? 'N/A';
+    String dateRequested = request['created_at'] ?? 'N/A';
+    String status = request['status'] ?? 'pending';
+    String note = request['note'] ?? 'No note added';
+    int id = request['id'] ?? 0;
+
+    Color statusColor;
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        statusColor = Colors.green;
+        break;
+      case 'pending':
+        statusColor = Colors.orange;
+        break;
+      case 'rejected':
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(15),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Text(status.toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+              Spacer(),
+              IconButton(
+                icon: Icon(Icons.note_add),
+                onPressed: () => _showAddNoteDialog(index, request['user_id'], id),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text("Business Name: $businessName", style: const TextStyle(color: Colors.black)),
+          Text("Owner: $ownerName", style: const TextStyle(color: Colors.black)),
+          Text("Address: $houseNumber, $street, $subdivision", style: const TextStyle(color: Colors.black)),
+          Text("Business Type: $businessType", style: const TextStyle(color: Colors.black)),
+          Text("Date Requested: $dateRequested", style: const TextStyle(color: Colors.black)),
+          Text("Note: $note", style: const TextStyle(color: Colors.black)),
+        ],
+      ),
+    );
   }
 
   @override
@@ -75,60 +208,9 @@ class _BusinessPermitStatusPageState extends State<BusinessPermitStatusPage> {
             : ListView.builder(
           itemCount: businessPermitRequests.length,
           itemBuilder: (context, index) {
-            return _buildBusinessPermitEntry(businessPermitRequests[index]);
+            return _buildBusinessPermitEntry(businessPermitRequests[index], index);
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildBusinessPermitEntry(dynamic request) {
-    // Handle potential null values
-    String businessName = request['business_name'] ?? 'Unknown';
-    String ownerName = request['owner_name'] ?? 'Unknown';
-    String businessType = request['business_type'] ?? 'N/A';
-    String status = request['status'] ?? 'Pending';
-    String dateRequested = request['created_at'] ?? 'N/A';
-
-    // Define status color based on status value
-    Color statusColor = status == 'Accepted' ? Colors.green : (status == 'Pending' ? Colors.orange : Colors.red);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15),
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            margin: const EdgeInsets.only(top: 5, right: 8),
-            decoration: BoxDecoration(
-              color: statusColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  status.toUpperCase(),
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                ),
-                Text("Business: $businessName", style: const TextStyle(color: Colors.black)),
-                Text("Owner: $ownerName", style: const TextStyle(color: Colors.black)),
-                Text("Type: $businessType", style: const TextStyle(color: Colors.black)),
-                Text("Date: $dateRequested", style: const TextStyle(color: Colors.black)),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
