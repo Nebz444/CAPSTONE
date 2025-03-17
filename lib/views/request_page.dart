@@ -17,7 +17,7 @@ class RequestPage extends StatelessWidget {
           'Request',
           style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.black),
         ),
-        centerTitle: true,
+        centerTitle: false, // Aligns title to the left
       ),
       body: Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),

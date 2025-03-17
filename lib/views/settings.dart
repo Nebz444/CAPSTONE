@@ -1,3 +1,5 @@
+import 'package:baranguard/views/aboutUs.dart';
+import 'package:baranguard/views/helpSupport.dart';
 import 'package:flutter/material.dart';
 import 'package:baranguard/views/account_settings_page.dart';
 import 'package:baranguard/views/change_password_page.dart'; // Import the new ChangePasswordPage
@@ -7,6 +9,7 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart'; // Add this import for file storage
 import 'dart:io'; // For file operations
 import 'package:open_file/open_file.dart';
+import 'aboutUs.dart';
 
 
 import 'package:url_launcher/url_launcher.dart';
@@ -100,7 +103,10 @@ class _SettingsPageState extends State<SettingsPage> {
               title: 'Help & Support',
               icon: Icons.help,
               onTap: () {
-                // Navigate to Help & Support Page
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HelpSupportPage()),
+                );
               },
             ),
             _buildListTile( // put it here the update button
@@ -112,7 +118,10 @@ class _SettingsPageState extends State<SettingsPage> {
               title: 'About Us',
               icon: Icons.info,
               onTap: () {
-                // Navigate to About Us Page
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(builder: (context) => AboutUsPage()),
+                 );
               },
             ),
           ],
