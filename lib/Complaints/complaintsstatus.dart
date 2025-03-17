@@ -48,7 +48,8 @@ class _ComplaintsStatusPageState extends State<ComplaintsStatusPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF154068), // New background color
       appBar: AppBar(
-        title: const Text('Complaints Status', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Complaints Status', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: const Color(0xFF154068),
         elevation: 0,
         centerTitle: true,

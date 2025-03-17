@@ -214,105 +214,112 @@ class _ClearanceState extends State<Clearance> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2D56),
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: const Color(0xFF0D2D56), // Dark blue matching the design
         centerTitle: true,
+        title: const Text('Clearance', style: TextStyle(fontSize: 20, color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D2D56),
-                    borderRadius: BorderRadius.circular(8),
+      body: Stack (
+        children: [
+          Container(
+      decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter, // Gradient starts at the top
+        end: Alignment.bottomCenter, // Gradient ends at the bottom
+        colors: [
+              Color(0xFF0D2D56), // Dark blue (top)
+              Color(0xFF1E5A8A), // Medium blue (middle)
+              Color(0xFF2D7BA7), // Lighter blue (bottom)
+            ]
+            ,stops: [0.0, 0.5, 1.0],
+      ),
+    ),
+    ),
+    // Content
+    Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: SingleChildScrollView(
+    child: Form(
+    key: _formKey,
+    child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+
+                  const SizedBox(height: 20),
+                  buildTextField("First Name", _firstNameController),
+                  buildTextField("Middle Name", _middleNameController, required: false),
+                  buildTextField("Last Name", _lastNameController),
+                  Row(
+                    children: [
+                      Expanded(child: buildTextField("House Number", _houseNumberController, keyboardType: TextInputType.number)),
+                      const SizedBox(width: 10),
+                      Expanded(child: buildTextField("Street", _streetController)),
+                    ],
                   ),
-                  child: const Text(
-                    "Clearance Form",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                    textAlign: TextAlign.center,
+                  buildTextField("Subdivision (if any)", _subdivisionController, required: false),
+                  Row(
+                    children: [
+                      Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
+                      const SizedBox(width: 10),
+                      Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 20),
-                buildTextField("First Name", _firstNameController),
-                buildTextField("Middle Name", _middleNameController, required: false),
-                buildTextField("Last Name", _lastNameController),
-                Row(
-                  children: [
-                    Expanded(child: buildTextField("House Number", _houseNumberController, keyboardType: TextInputType.number)),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildTextField("Street", _streetController)),
-                  ],
-                ),
-                buildTextField("Subdivision (if any)", _subdivisionController, required: false),
-                Row(
-                  children: [
-                    Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
-                  ],
-                ),
-                buildTextField("Birthplace", _birthplaceController),
-                Row(
-                  children: [
-                    Expanded(child: buildDropdown("Gender", _selectedGender, ['Male', 'Female'], (newValue) {
-                      setState(() {
-                        _selectedGender = newValue;
-                      });
-                    })),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Annulled'], (newValue) {
-                      setState(() {
-                        _selectedCivilStatus = newValue;
-                      });
-                    })),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: buildTextField("Height (cm)", _heightController, keyboardType: TextInputType.number)),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildTextField("Weight (kg)", _weightController, keyboardType: TextInputType.number)),
-                  ],
-                ),
-                buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
-                buildTextField("Emergency Contact", _emergencyNumberController),
-                const SizedBox(height: 20),
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-                    ),
-                    onPressed: _isLoading ? null : confirmSubmission, // Disable button when loading
-                    child: _isLoading
-                        ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+                  buildTextField("Birthplace", _birthplaceController),
+                  Row(
+                    children: [
+                      Expanded(child: buildDropdown("Gender", _selectedGender, ['Male', 'Female'], (newValue) {
+                        setState(() {
+                          _selectedGender = newValue;
+                        });
+                      })),
+                      const SizedBox(width: 10),
+                      Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Annulled'], (newValue) {
+                        setState(() {
+                          _selectedCivilStatus = newValue;
+                        });
+                      })),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(child: buildTextField("Height (cm)", _heightController, keyboardType: TextInputType.number)),
+                      const SizedBox(width: 10),
+                      Expanded(child: buildTextField("Weight (kg)", _weightController, keyboardType: TextInputType.number)),
+                    ],
+                  ),
+                  buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
+                  buildTextField("Emergency Contact", _emergencyNumberController),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                       ),
-                    )
-                        : const Text(
-                      'Submit',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                      onPressed: _isLoading ? null : confirmSubmission, // Disable button when loading
+                      child: _isLoading
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : const Text(
+                        'Submit',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
+      ],
+    ),
     );
   }
 

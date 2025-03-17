@@ -210,142 +210,151 @@ class _IndigencyFormState extends State<IndigencyForm> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2D56),
+        backgroundColor: const Color(0xFF0D2D56), // Dark blue matching the design
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('Certificate of Indigency', style: TextStyle(fontSize: 20, color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white), // Make the back button white
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D2D56),
-                    borderRadius: BorderRadius.circular(8),
+      body: Stack(
+        children: [
+      // Gradient Background
+      Container(
+      decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter, // Gradient starts at the top
+        end: Alignment.bottomCenter, // Gradient ends at the bottom
+        colors: [
+          Color(0xFF0D2D56), // Dark blue (top)
+          Color(0xFF1E5A8A), // Medium blue (middle)
+          Color(0xFF2D7BA7), // Lighter blue (bottom)
+        ],
+        stops: [0.0, 0.5, 1.0], // Control the transition points
+      ),
+    ),
+    ),
+    // Content
+    Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: SingleChildScrollView(
+    child: Form(
+    key: _formKey,
+    child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+                  const SizedBox(height: 20),
+                  buildTextField("Name of the one who manages", _managerNameController),
+                  Row(
+                    children: [
+                      Expanded(child: buildTextField("House Number", _houseNumberController)),
+                      const SizedBox(width: 10),
+                      Expanded(child: buildTextField("Street", _streetController)),
+                    ],
                   ),
-                  child: const Text(
-                    "Indigency Form",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                    textAlign: TextAlign.center,
+                  buildTextField("Subdivision (if any)", _subdivisionController, required: false),
+                  Row(
+                    children: [
+                      Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
+                      const SizedBox(width: 10),
+                      Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 20),
-                buildTextField("Name of the one who manages", _managerNameController),
-                Row(
-                  children: [
-                    Expanded(child: buildTextField("House Number", _houseNumberController)),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildTextField("Street", _streetController)),
-                  ],
-                ),
-                buildTextField("Subdivision (if any)", _subdivisionController, required: false),
-                Row(
-                  children: [
-                    Expanded(child: buildTextField("Birthday", _birthdayController, readOnly: true, onTap: () => _selectDate(context))),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildTextField("Age", _ageController, keyboardType: TextInputType.number)),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: buildDropdown("Gender", _selectedGender, ['Male', 'Female'], (newValue) {
-                      setState(() {
-                        _selectedGender = newValue;
-                      });
-                    })),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Annulled'], (newValue) {
-                      setState(() {
-                        _selectedCivilStatus = newValue;
-                      });
-                    })),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: buildTextField("Name of the Patient", _patientNameController)),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: buildDropdown(
-                        "Relation to the Patient",
-                        _relationController.text.isEmpty ? null : _relationController.text,
-                        [
-                          'Myself',
-                          'Spouse',
-                          'Mother',
-                          'Father',
-                          'Sibling',
-                          'Brother',
-                          'Sister',
-                          'Grandmother',
-                          'Grandfather',
-                          'Son',
-                          'Daughter',
-                          'Relative',
-                        ],
-                            (newValue) {
-                          setState(() {
-                            _relationController.text = newValue!;
-                          });
-                        },
+                  Row(
+                    children: [
+                      Expanded(child: buildDropdown("Gender", _selectedGender, ['Male', 'Female'], (newValue) {
+                        setState(() {
+                          _selectedGender = newValue;
+                        });
+                      })),
+                      const SizedBox(width: 10),
+                      Expanded(child: buildDropdown("Civil Status", _selectedCivilStatus, ['Single', 'Married', 'Widowed', 'Annulled'], (newValue) {
+                        setState(() {
+                          _selectedCivilStatus = newValue;
+                        });
+                      })),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(child: buildTextField("Name of the Patient", _patientNameController)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: buildDropdown(
+                          "Relation to the Patient",
+                          _relationController.text.isEmpty ? null : _relationController.text,
+                          [
+                            'Myself',
+                            'Spouse',
+                            'Mother',
+                            'Father',
+                            'Sibling',
+                            'Brother',
+                            'Sister',
+                            'Grandmother',
+                            'Grandfather',
+                            'Son',
+                            'Daughter',
+                            'Relative',
+                          ],
+                              (newValue) {
+                            setState(() {
+                              _relationController.text = newValue!;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  buildTextField("Annual Income", _annualIncomeController, keyboardType: TextInputType.number), // Add annual income field
+                  buildDropdown("Purpose", _selectedPurpose, [
+                    'Medical and Financial',
+                    'Medical',
+                    'Financial',
+                    'Student Assistance',
+                    'Food And Financial Assistance',
+                    'Food Assistance',
+                    'Other',
+                  ], (newValue) {
+                    setState(() {
+                      _selectedPurpose = newValue;
+                      _showOtherPurposeField = newValue == 'Other';
+                    });
+                  }),
+                  if (_showOtherPurposeField)
+                    buildTextField("Please specify other purpose", _otherPurposeController),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                      ),
+                      onPressed: _isLoading ? null : confirmSubmission, // Disable button when loading
+                      child: _isLoading
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : const Text(
+                        'Submit',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                     ),
-                  ],
-                ),
-                buildTextField("Annual Income", _annualIncomeController, keyboardType: TextInputType.number), // Add annual income field
-                buildDropdown("Purpose", _selectedPurpose, [
-                  'Medical and Financial',
-                  'Medical',
-                  'Financial',
-                  'Student Assistance',
-                  'Food And Financial Assistance',
-                  'Food Assistance',
-                  'Other',
-                ], (newValue) {
-                  setState(() {
-                    _selectedPurpose = newValue;
-                    _showOtherPurposeField = newValue == 'Other';
-                  });
-                }),
-                if (_showOtherPurposeField)
-                  buildTextField("Please specify other purpose", _otherPurposeController),
-                const SizedBox(height: 20),
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-                    ),
-                    onPressed: _isLoading ? null : confirmSubmission, // Disable button when loading
-                    child: _isLoading
-                        ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                        : const Text(
-                      'Submit',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
+              ]
+              ),
     );
   }
 

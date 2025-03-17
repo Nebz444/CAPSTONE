@@ -9,390 +9,111 @@ import 'package:baranguard/formStatus/businesspermitStatus.dart';
 import 'package:baranguard/formStatus/clearanceStatus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class StatusPage extends StatelessWidget {
   const StatusPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF154068), // Dark blue background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF154068),
-        elevation: 0,
+        backgroundColor: const Color(0xFF154C79),
+        title: const Text(
+          'Status',
+          style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: constraints.maxWidth * 0.02, // 5% of screen width
-                vertical: constraints.maxHeight * 0.02, // 5% of screen height
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildCategory('Reports', [
+              _buildStatusTile(context, 'Report Status', Icons.report, (userId) => ReportStatusPage(userId: userId)),
+              _buildStatusTile(context, 'Complaints Status', Icons.warning, (userId) => ComplaintsStatusPage(userId: userId)),
+            ]),
+            const SizedBox(height: 20),
+            _buildCategory('Documents', [
+              _buildStatusTile(context, 'Barangay ID Status', Icons.badge, (userId) => BarangayIDStatusPage(userId: userId)),
+              _buildStatusTile(context, 'Cedula Status', Icons.document_scanner, (userId) => CedulaStatusPage(userId: userId)),
+              _buildStatusTile(context, 'Certificate Status', Icons.assignment, (userId) => CertificateStatusPage(userId: userId)),
+              _buildStatusTile(context, 'Indigency Status', Icons.receipt, (userId) => IndigencyStatusPage(userId: userId)),
+              _buildStatusTile(context, 'Business Permit Status', Icons.business, (userId) => BusinessPermitStatusPage(userId: userId)),
+              _buildStatusTile(context, 'Clearance Status', Icons.check_circle, (userId) => ClearanceStatusPage(userId: userId)),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategory(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: const EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 5)],
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusTile(
+      BuildContext context, String title, IconData icon, Widget Function(int) pageBuilder) {
+    return AnimatedOpacity(
+      opacity: 1,
+      duration: const Duration(milliseconds: 300),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        leading: Icon(icon, color: Colors.blue.shade700),
+        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: () async {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          int? userId = prefs.getInt('user_id');
+
+          if (userId != null) {
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => pageBuilder(userId),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(1.0, 0.0);
+                  const end = Offset.zero;
+                  const curve = Curves.easeInOut;
+                  var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                  var offsetAnimation = animation.drive(tween);
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+                transitionDuration: const Duration(milliseconds: 500),
               ),
-              child: Column(
-                children: [
-                  _buildHeader(constraints),
-                  const SizedBox(height: 30),
-                  _buildReportStatusButton(context),
-                  const SizedBox(height: 20),
-                  _buildComplaintsStatusButton(context),
-                  const SizedBox(height: 20),
-                  _buildBarangayIDStatusButton(context),
-                  const SizedBox(height: 20),
-                  _buildCedulaStatusButton(context),
-                  const SizedBox(height: 20),
-                  _buildCertificateStatusButton(context),
-                  const SizedBox(height: 20),
-                  _buildIndigencyStatusButton(context),
-                  const SizedBox(height: 20),
-                  _buildBusinessPermitStatusButton(context),
-                  const SizedBox(height: 20),
-                  _buildClearanceStatusButton(context),
-                ],
-              ),
-            ),
-          );
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("User ID not found. Please log in again.")),
+            );
+          }
         },
       ),
     );
   }
-
-//Report
-  Widget _buildReportStatusButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        int? userId = prefs.getInt('user_id'); // Retrieve userId
-
-        if (userId != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ReportStatusPage(userId: userId), // Pass userId
-            ),
-          );
-        } else {
-          // Handle case where userId is missing
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("User ID not found. Please log in again.")),
-          );
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: const Center(
-          child: Text(
-            "Report Status",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-        ),
-      ),
-    );
-  }
 }
-
-//Complaints
-  Widget _buildComplaintsStatusButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        int? userId = prefs.getInt('user_id'); // Retrieve userId
-
-        if (userId != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ComplaintsStatusPage(userId: userId), // Pass userId
-            ),
-          );
-        } else {
-          // Handle case where userId is missing
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("User ID not found. Please log in again.")),
-          );
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade300,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: const Center(
-          child: Text(
-            "Complaints Status",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-        ),
-      ),
-    );
-  }
-
-//Certificates
-Widget _buildCertificateStatusButton(BuildContext context) {
-  return GestureDetector(
-    onTap: () async {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      int? userId = prefs.getInt('user_id'); // Retrieve userId
-
-      if (userId != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CertificateStatusPage(userId: userId), // Pass userId
-          ),
-        );
-      } else {
-        // Handle case where userId is missing
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User ID not found. Please log in again.")),
-        );
-      }
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: const Center(
-        child: Text(
-          "Certificate Status",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-    ),
-  );
-}
-
-Widget _buildBarangayIDStatusButton(BuildContext context) {
-  return GestureDetector(
-    onTap: () async {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      int? userId = prefs.getInt('user_id'); // Retrieve userId
-
-      if (userId != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BarangayIDStatusPage(userId: userId), // Pass userId
-          ),
-        );
-      } else {
-        // Handle case where userId is missing
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User ID not found. Please log in again.")),
-        );
-      }
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: const Center(
-        child: Text(
-          "Barangay ID Status",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-    ),
-  );
-}
-
-//cedula
-Widget _buildCedulaStatusButton(BuildContext context) {
-  return GestureDetector(
-    onTap: () async {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      int? userId = prefs.getInt('user_id'); // Retrieve userId
-
-      if (userId != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CedulaStatusPage(userId: userId), // Pass userId
-          ),
-        );
-      } else {
-        // Handle case where userId is missing
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User ID not found. Please log in again.")),
-        );
-      }
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: const Center(
-        child: Text(
-          "Cedula Status",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-    ),
-  );
-}
-
-//indigency
-Widget _buildIndigencyStatusButton(BuildContext context) {
-  return GestureDetector(
-    onTap: () async {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      int? userId = prefs.getInt('user_id'); // Retrieve userId
-
-      if (userId != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => IndigencyStatusPage(userId: userId), // Pass userId
-          ),
-        );
-      } else {
-        // Handle case where userId is missing
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User ID not found. Please log in again.")),
-        );
-      }
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: const Center(
-        child: Text(
-          "Indigency Status",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-    ),
-  );
-}
-
-//Business Permit
-Widget _buildBusinessPermitStatusButton(BuildContext context) {
-  return GestureDetector(
-    onTap: () async {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      int? userId = prefs.getInt('user_id'); // Retrieve userId
-
-      if (userId != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BusinessPermitStatusPage(userId: userId), // Pass userId
-          ),
-        );
-      } else {
-        // Handle case where userId is missing
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User ID not found. Please log in again.")),
-        );
-      }
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: const Center(
-        child: Text(
-          "Business Permit Status",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-    ),
-  );
-}
-
-//Business Permit
-Widget _buildClearanceStatusButton(BuildContext context) {
-  return GestureDetector(
-    onTap: () async {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      int? userId = prefs.getInt('user_id'); // Retrieve userId
-
-      if (userId != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ClearanceStatusPage(userId: userId), // Pass userId
-          ),
-        );
-      } else {
-        // Handle case where userId is missing
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User ID not found. Please log in again.")),
-        );
-      }
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: const Center(
-        child: Text(
-          "Clearance Status",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-    ),
-  );
-}
-
-
-Widget _buildHeader(BoxConstraints constraints) {
-    return Container(
-      width: constraints.maxWidth,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade900,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Center(
-        child: Text(
-          "Status",
-          style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusButton(String text, BoxConstraints constraints) {
-    return Container(
-      width: constraints.maxWidth * 0.9, // 90% of screen width
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Center(
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-    );
-  }

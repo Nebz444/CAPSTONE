@@ -1,6 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:photo_view/photo_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 
 class BaranguardFeed extends StatefulWidget {
@@ -79,7 +81,71 @@ class _BaranguardFeedState extends State<BaranguardFeed> {
     );
   }
 
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
+  Future<void> _askPermissionAndLaunchURL(String url) async {
+    final bool permission = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Open Link'),
+          content: const Text('Do you want to open this link in a browser?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Open'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (permission == true) {
+      await _launchURL(url);
+    }
+  }
+
+  List<TextSpan> _buildTextSpans(String text, Iterable<RegExpMatch> matches) {
+    final List<TextSpan> spans = [];
+    int currentIndex = 0;
+
+    for (final match in matches) {
+      if (match.start > currentIndex) {
+        spans.add(TextSpan(text: text.substring(currentIndex, match.start)));
+      }
+      final String url = match.group(0)!;
+      spans.add(
+        TextSpan(
+          text: url,
+          style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => _askPermissionAndLaunchURL(url),
+        ),
+      );
+      currentIndex = match.end;
+    }
+
+    if (currentIndex < text.length) {
+      spans.add(TextSpan(text: text.substring(currentIndex)));
+    }
+
+    return spans;
+  }
+
   Widget buildPost(Map<String, dynamic> post) {
+    final String postText = post['text'] ?? '';
+    final RegExp urlRegex = RegExp(r"(https?://[^\s]+)");
+    final Iterable<RegExpMatch> matches = urlRegex.allMatches(postText);
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -147,9 +213,11 @@ class _BaranguardFeedState extends State<BaranguardFeed> {
               ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Text(
-                post['text'] ?? '',
-                style: const TextStyle(fontSize: 16),
+              child: RichText(
+                text: TextSpan(
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                  children: _buildTextSpans(postText, matches),
+                ),
               ),
             ),
           ],

@@ -1,108 +1,81 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
-import 'report.dart'; // Import the ReportPage class
-import 'reportstatus.dart'; // Import the ReportStatusPage class
+import 'package:shared_preferences/shared_preferences.dart';
+import 'report.dart';
+import 'reportstatus.dart';
 
 class ReportFirstPage extends StatelessWidget {
   const ReportFirstPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-
-    double imageOpacity = 0.3; // Set the desired opacity value
-
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2D56), // Dark blue matching the design
-        title: const Text('Report', style: TextStyle(color: Colors.white)),
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          // Background Image with Opacity
-          Positioned(
-            left: .3, // Adjust horizontal position (distance from the left)
-            top: 180, // Adjust vertical position (distance from the top)
-            child: Opacity(
-              opacity: imageOpacity, // Adjust opacity here (0.0 to 1.0)
-              child: Container(
-                width: 400,
-                height: 300,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('lib/images/repBG.png'), // Path to your image
-                    fit: BoxFit.cover, // Cover the entire screen
-                  ),
-                ),
-              ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Reports',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
-          ),
-          // Main Content
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildReportButton(context, 'Submit a Report', ReportPage()),
-                const SizedBox(height: 10),
-                _buildReportStatusButton(context),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReportButton(BuildContext context, String text, Widget page) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue.shade900, // Button background color
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10), // Rounded corners
+            const SizedBox(height: 8),
+            _buildReportOption(context, Icons.report, 'Submit a Report', const ReportPage()),
+            _buildReportStatusOption(context),
+          ],
         ),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 18, color: Colors.white),
-      ),
     );
   }
 
-  Widget _buildReportStatusButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
+  Widget _buildReportOption(BuildContext context, IconData icon, String title, Widget page) {
+    return _buildListTile(
+      context,
+      icon,
+      title,
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+      },
+    );
+  }
+
+  Widget _buildReportStatusOption(BuildContext context) {
+    return _buildListTile(
+      context,
+      Icons.assignment_turned_in,
+      'Report Status',
+      onTap: () async {
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        int? userId = prefs.getInt('user_id'); // R etrieve userId
+        int? userId = prefs.getInt('user_id');
 
         if (userId != null) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => ReportStatusPage(userId: userId), // Pass userId
-            ),
+            MaterialPageRoute(builder: (context) => ReportStatusPage(userId: userId)),
           );
         } else {
-          // Handle case where userId is missing
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("User ID not found. Please log in again.")),
           );
         }
       },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue.shade900, // Button background color
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10), // Rounded corners
-        ),
+    );
+  }
+
+  Widget _buildListTile(BuildContext context, IconData icon, String title, {VoidCallback? onTap}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(color: Colors.grey.withOpacity(0.5), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 2),),
+        ],
       ),
-      child: const Text(
-        'Report Status',
-        style: TextStyle(fontSize: 18, color: Colors.white),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.blue.shade900),
+        title: Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 20),
+        onTap: onTap ?? () {},
       ),
     );
   }

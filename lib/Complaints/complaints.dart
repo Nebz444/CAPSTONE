@@ -194,147 +194,166 @@ class _ComplaintsFormState extends State<ComplaintsForm> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF174A7C), // Dark blue background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2D56),
+        backgroundColor: const Color(0xFF0D2D56), // Dark blue matching the design
         centerTitle: true,
         title: const Text('Complaint Request', style: TextStyle(fontSize: 20, color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white), // Make the back button white
       ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.05,
-          vertical: screenHeight * 0.02,
-        ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                // Complaint Type at the beginning
-                buildDropdown("Complaint Type", _selectedComplaintType, [
-                  'Noise Complaint',
-                  'Waste Complaint',
-                  'Loitering',
-                  'Animal Complaints',
-                  'Vandalism',
-                  'Trespassing',
-                  'Boundary Disputes',
-                  'Domestic Disputes',
-                  'Other', // Add "Other" option
-                ], (newValue) {
-                  setState(() {
-                    _selectedComplaintType = newValue;
-                    _showOtherComplaintField = newValue == 'Other'; // Show "Other" field if "Other" is selected
-                  });
-                }),
-                if (_showOtherComplaintField)
-                  buildTextField("Please specify other complaint type", _otherComplaintController),
-                const SizedBox(height: 10),
-                buildTextField("Name", _nameController),
-                Row(
-                  children: [
-                    Expanded(child: buildTextField("House Number", _houseNumberController)),
-                    const SizedBox(width: 10),
-                    Expanded(child: buildTextField("Street", _streetController)),
-                  ],
-                ),
-                buildTextField("Subdivision (if any)", _subdivisionController, required: false),
-                buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
-                const SizedBox(height: 10),
-                const Text(
-                  'Description of Complaints (Optional):',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                const SizedBox(height: 5),
-                TextFormField(
-                  controller: _narrativeController,
-                  maxLines: 4,
-                  style: const TextStyle(color: Colors.black),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[300],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: _pickImage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-                  ),
-                  child: const Text('[ + Attach Image ]', style: TextStyle(color: Colors.white)),
-                ),
-                if (_imageFile != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            _imageFile!,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            height: 200, // Adjust height as needed
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: GestureDetector(
-                            onTap: _removeImage,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 20),
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-                    ),
-                    onPressed: _isLoading ? null : _confirmAndSubmit, // Disable button when loading
-                    child: _isLoading
-                        ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                        : const Text(
-                      'Submit',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
+      body: Stack(
+        children: [
+          // Gradient Background
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter, // Gradient starts at the top
+                end: Alignment.bottomCenter, // Gradient ends at the bottom
+                colors: [
+                  Color(0xFF0D2D56), // Dark blue (top)
+                  Color(0xFF1E5A8A), // Medium blue (middle)
+                  Color(0xFF2D7BA7), // Lighter blue (bottom)
+                ],
+                stops: [0.0, 0.5, 1.0], // Control the transition points
+              ),
             ),
           ),
-        ),
+          // Content
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.05,
+              vertical: screenHeight * 0.02,
+            ),
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    // Complaint Type at the beginning
+                    buildDropdown("Complaint Type", _selectedComplaintType, [
+                      'Noise Complaint',
+                      'Waste Complaint',
+                      'Loitering',
+                      'Animal Complaints',
+                      'Vandalism',
+                      'Trespassing',
+                      'Boundary Disputes',
+                      'Domestic Disputes',
+                      'Other', // Add "Other" option
+                    ], (newValue) {
+                      setState(() {
+                        _selectedComplaintType = newValue;
+                        _showOtherComplaintField = newValue == 'Other'; // Show "Other" field if "Other" is selected
+                      });
+                    }),
+                    if (_showOtherComplaintField)
+                      buildTextField("Please specify other complaint type", _otherComplaintController),
+                    const SizedBox(height: 10),
+                    buildTextField("Name", _nameController),
+                    Row(
+                      children: [
+                        Expanded(child: buildTextField("House Number", _houseNumberController)),
+                        const SizedBox(width: 10),
+                        Expanded(child: buildTextField("Street", _streetController)),
+                      ],
+                    ),
+                    buildTextField("Subdivision (if any)", _subdivisionController, required: false),
+                    buildTextField("Contact Number", _contactNumberController, keyboardType: TextInputType.phone),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Description of Complaints (Optional):',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 5),
+                    TextFormField(
+                      controller: _narrativeController,
+                      maxLines: 4,
+                      style: const TextStyle(color: Colors.black),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey[300],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: _pickImage,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                      ),
+                      child: const Text('[ + Attach Image ]', style: TextStyle(color: Colors.white)),
+                    ),
+                    if (_imageFile != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                _imageFile!,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                height: 200, // Adjust height as needed
+                              ),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: _removeImage,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                        ),
+                        onPressed: _isLoading ? null : _confirmAndSubmit, // Disable button when loading
+                        child: _isLoading
+                            ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                            : const Text(
+                          'Submit',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -84,7 +84,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF0F4C81), // Dark Blue Background
       appBar: AppBar(
-        title: const Text('New Password'),
+        title: const Text(
+          'New Password',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: const Color(0xFF072F5F), // Slightly Darker Blue
         centerTitle: true,
         elevation: 0,

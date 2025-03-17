@@ -211,7 +211,8 @@ class _CedulaStatusPageState extends State<CedulaStatusPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF154068),
       appBar: AppBar(
-        title: const Text('Cedula Status', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Cedula Status', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: const Color(0xFF154068),
         elevation: 0,
         centerTitle: true,

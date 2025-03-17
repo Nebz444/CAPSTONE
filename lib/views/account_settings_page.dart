@@ -12,6 +12,8 @@ import '../provider/user_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AccountSettingsPage extends StatefulWidget {
+  const AccountSettingsPage({super.key});
+
   @override
   _AccountSettingsPageState createState() => _AccountSettingsPageState();
 }
@@ -112,7 +114,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         );
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profile updated successfully')),
+          const SnackBar(content: Text('Profile updated successfully')),
         );
 
         setState(() {
@@ -209,12 +211,26 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     return null;
   }
 
+  Future<void> _removeProfileImage() async {
+    setState(() {
+      _profileImage = null;
+      user!.profileImage = null;
+    });
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('profileImage');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profile image removed')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF174A7C), // Dark blue background
+      backgroundColor: const Color(0xFF0D2D56), // Fallback color
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2D56), // Darker blue for app bar
+        backgroundColor: const Color(0xFF0D2D56), // Dark blue matching the design
         title: const Text('Account Settings', style: TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -232,56 +248,104 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           ),
         ],
       ),
-      body: user == null
-          ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : ListView(
-        padding: const EdgeInsets.all(16.0),
+      body: Stack(
         children: [
-          Center(
-            child: GestureDetector(
-              onTap: _pickProfileImage,
-              child: CircleAvatar(
-                radius: 60,
-                backgroundImage: _profileImage != null
-                    ? FileImage(_profileImage!) as ImageProvider
-                    : user?.profileImage != null
-                    ? NetworkImage(user!.profileImage!)
-                    : const AssetImage('lib/images/default_profile.png'),
-                child: _profileImage == null && user?.profileImage == null
-                    ? const Icon(
-                  Icons.camera_alt,
-                  size: 30,
-                  color: Colors.white,
-                )
-                    : null,
+          // Gradient Background
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter, // Gradient starts at the top
+                end: Alignment.bottomCenter, // Gradient ends at the bottom
+                colors: [
+                  Color(0xFF0D2D56), // Dark blue (top)
+                  Color(0xFF1E5A8A), // Medium blue (middle)
+                  Color(0xFF2D7BA7), // Lighter blue (bottom)
+                ],
+                stops: [0.0, 0.5, 1.0], // Control the transition points
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          _isEditing
-              ? _buildEditableStringField("First Name", firstNameController, user?.firstName)
-              : _buildInfoRow("First Name", user?.firstName),
-          _isEditing
-              ? _buildEditableStringField("Last Name", lastNameController, user?.lastName)
-              : _buildInfoRow("Last Name", user?.lastName),
-          _isEditing
-              ? _buildEditableStringField("Middle Name", middleNameController, user?.middleName)
-              : _buildInfoRow("Middle Name", user?.middleName),
-          _isEditing
-              ? _buildEditableStringField("Suffix", suffixController, user?.suffix)
-              : _buildInfoRow("Suffix", user?.suffix),
-          _buildInfoRow("Birthdate", birthday),
-          _buildInfoRow("Username", user?.username),
-          _buildInfoRow("Gender", user?.gender),
-          _isEditing
-              ? _buildEditableStringField("Mobile Number", mobileNumberController, user?.mobileNumber)
-              : _buildInfoRow("Mobile Number", user?.mobileNumber),
-          _isEditing
-              ? _buildEditableStringField("Email", emailController, user?.email)
-              : _buildInfoRow("Email", user?.email),
-          _isEditing
-              ? _buildEditableStringField("Home Address", homeAddressController, user?.homeAddress)
-              : _buildInfoRow("Home Address", user?.homeAddress),
+          // Content
+          if (user == null)
+            const Center(child: CircularProgressIndicator(color: Colors.white))
+          else
+            ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                Center(
+                  child: Stack(
+                    children: [
+                      GestureDetector(
+                        onTap: _pickProfileImage,
+                        child: Container(
+                          width: 120, // Adjust size as needed
+                          height: 120, // Adjust size as needed
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white, // border color
+                              width: 4.0, // Border thickness
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 50, // Adjust size as needed
+                            backgroundColor: Colors.white, // Inner circle background color
+                            backgroundImage: _profileImage != null
+                                ? FileImage(_profileImage!)
+                                : (user?.profileImage != null && user!.profileImage!.isNotEmpty)
+                                ? NetworkImage(user!.profileImage!)
+                                : const AssetImage('lib/images/default_profile.png') as ImageProvider,
+                          ),
+                        ),
+                      ),
+                      if (user?.profileImage != null || _profileImage != null)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: _removeProfileImage,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _isEditing
+                    ? _buildEditableStringField("First Name", firstNameController)
+                    : _buildInfoRow("First Name", user?.firstName),
+                _isEditing
+                    ? _buildEditableStringField("Last Name", lastNameController)
+                    : _buildInfoRow("Last Name", user?.lastName),
+                _isEditing
+                    ? _buildEditableStringField("Middle Name", middleNameController)
+                    : _buildInfoRow("Middle Name", user?.middleName),
+                _isEditing
+                    ? _buildEditableStringField("Suffix", suffixController)
+                    : _buildInfoRow("Suffix", user?.suffix),
+                _buildInfoRow("Birthdate", birthday),
+                _buildInfoRow("Username", user?.username),
+                _buildInfoRow("Gender", user?.gender),
+                _buildInfoRow("Email", user?.email),
+                _isEditing
+                    ? _buildEditableStringField("Mobile Number", mobileNumberController)
+                    : _buildInfoRow("Mobile Number", user?.mobileNumber),
+                _isEditing
+                    ? _buildEditableStringField("Home Address", homeAddressController)
+                    : _buildInfoRow("Home Address", user?.homeAddress),
+              ],
+            ),
         ],
       ),
     );
@@ -295,35 +359,65 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         children: [
           Expanded(
             flex: 2,
-            child: Text("$label:", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+            child: Text(
+              "$label:",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
           ),
+          const SizedBox(width: 10), // Add spacing between label and value
           Expanded(
             flex: 3,
-            child: Text(value ?? 'N/A', style: const TextStyle(fontSize: 16, color: Colors.white)),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12), // Add padding
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1), // Semi-transparent white background
+                borderRadius: BorderRadius.circular(8), // Rounded corners
+              ),
+              child: Text(
+                value ?? 'N/A',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEditableStringField(String label, TextEditingController controller, String? current_info) {
-    controller.text = current_info ?? 'N/A';
-
+  Widget _buildEditableStringField(String label, TextEditingController controller) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextField(
-        controller: controller,
-        style: const TextStyle(color: Colors.black),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.white),
-          filled: true,
-          fillColor: Colors.grey[300],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
           ),
-        ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.black),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[300],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            ),
+            maxLines: null,
+            textAlign: TextAlign.start,
+          ),
+        ],
       ),
     );
   }

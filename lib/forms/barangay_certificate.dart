@@ -181,8 +181,6 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
     );
   }
 
-
-
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
@@ -234,49 +232,48 @@ class _BarangayCertificateFormState extends State<BarangayCertificateForm> {
     final isSmallScreen = screenWidth < 600;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF174A7C),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2D56),
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: const Color(0xFF0D2D56), // Dark blue matching the design
         centerTitle: true,
+        title: const Text('Barangay Certificate', style: TextStyle(fontSize: 20, color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white), // Make the back button white
       ),
-      body: Padding(
-        padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildFormHeader(isSmallScreen),
-                const SizedBox(height: 20),
-                _buildFormFields(isSmallScreen),
-                const SizedBox(height: 20),
-                _buildSubmitButton(isSmallScreen),
-              ],
+      body: Stack(
+        children: [
+          // Gradient Background
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter, // Gradient starts at the top
+                end: Alignment.bottomCenter, // Gradient ends at the bottom
+                colors: [
+                  Color(0xFF0D2D56), // Dark blue (top)
+                  Color(0xFF1E5A8A), // Medium blue (middle)
+                  Color(0xFF2D7BA7), // Lighter blue (bottom)
+                ],
+                stops: [0.0, 0.5, 1.0], // Control the transition points
+              ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFormHeader(bool isSmallScreen) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isSmallScreen ? 10.0 : 12.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D2D56),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        "Barangay Certificate Form",
-        style: TextStyle(
-          fontSize: isSmallScreen ? 18 : 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-        textAlign: TextAlign.center,
+          // Content
+          Padding(
+            padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20), // Add some spacing at the top
+                    _buildFormFields(isSmallScreen),
+                    const SizedBox(height: 20),
+                    _buildSubmitButton(isSmallScreen),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
