@@ -309,55 +309,15 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
     );
   }
 
-  Future<void> _confirmSubmission() async {
-    bool? confirm = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Registration'),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: [
-              Text('First Name: ${_firstNameController.text}'),
-              Text('Last Name: ${_lastNameController.text}'),
-              Text('Middle Name: ${_middleNameController.text}'),
-              Text('Suffix: ${_suffixController.text}'),
-              Text('Gender: $_selectedGender'),
-              Text('Birthday: ${_selectedBirthday?.toIso8601String().split('T')[0] ?? "Not selected"}'),
-              Text('Mobile Number: ${_mobileNumberController.text}'),
-              Text('Email: ${_emailController.text}'),
-              Text('Address: ${_homeAddressController.text}'),
-              Text('Username: ${_usernameController.text}'),
-              if (_isBeneficiary) ...[
-                Text('Beneficiary Number: ${_beneficiaryNumberController.text}'),
-                Text('Beneficiary Types: ${_selectedBeneficiaryTypes.join(", ")}'),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Edit'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      _signUp();
-    }
-  }
-
   void _signUp() async {
     if (_isLoading || !mounted || !_termsAgreed) return;
 
     setState(() {
       _isLoading = true;
     });
+
+    // Debug: Print selected beneficiary types
+    print("Selected Beneficiary Types: $_selectedBeneficiaryTypes");
 
     String lastName = _lastNameController.text.trim();
     String firstName = _firstNameController.text.trim();
@@ -372,7 +332,10 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
     String homeAddress = _homeAddressController.text.trim();
     String gender = _selectedGender ?? '';
     String beneficiaryNumber = _beneficiaryNumberController.text.trim();
-    String beneficiaryList = _selectedBeneficiaryTypes.join(", ");
+    String beneficiaryList = _selectedBeneficiaryTypes.join(", "); // Convert list to comma-separated string
+
+    // Debug: Print the final beneficiary list
+    print("Beneficiary List: $beneficiaryList");
 
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -414,9 +377,12 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
           'gender': gender,
           'is_beneficiary': _isBeneficiary ? 1 : 0,
           'beneficiary_number': beneficiaryNumber.isNotEmpty ? beneficiaryNumber : null,
-          'beneficiary_list': beneficiaryList.isNotEmpty ? beneficiaryList : null,
+          'beneficiary_list': beneficiaryList.isNotEmpty ? beneficiaryList : null, // Send beneficiary list
         }),
       );
+
+      // Debug: Print the API response
+      print("API Response: ${response.body}");
 
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
@@ -437,6 +403,8 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
         );
       }
     } catch (e) {
+      // Debug: Print any errors
+      print("Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("An error occurred. Please try again.")),
       );
@@ -655,7 +623,7 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
                                   if (mounted) {
                                     setState(() {
                                       if (!_selectedBeneficiaryTypes.contains(value)) {
-                                        _selectedBeneficiaryTypes.add(value!);
+                                        _selectedBeneficiaryTypes.add(value!); // Add selected value to the list
                                       }
                                     });
                                   }
@@ -688,7 +656,7 @@ class _BarangayRegistrationState extends State<BarangayRegistration>
                                 ),
                                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
                               ),
-                              onPressed: _isLoading ? null : _confirmSubmission,
+                              onPressed: _isLoading ? null : _signUp,
                               child: _isLoading
                                   ? const SizedBox(
                                 width: 20,

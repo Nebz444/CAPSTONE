@@ -1,15 +1,10 @@
-import 'package:baranguard/views/aboutUs.dart';
-import 'package:baranguard/views/helpSupport.dart';
 import 'package:flutter/material.dart';
 import 'package:baranguard/views/account_settings_page.dart';
 import 'package:baranguard/views/change_password_page.dart'; // Import the new ChangePasswordPage
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart'; // Add this import for file storage
-import 'dart:io'; // For file operations
-import 'package:open_file/open_file.dart';
 import 'aboutUs.dart';
+import 'helpSupport.dart';
 
 
 import 'package:url_launcher/url_launcher.dart';
@@ -56,75 +51,89 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF154C79),
-        title: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF0D2D56), // Dark blue (top)
+            Color(0xFF1E5A8A), // Medium blue (middle)
+            Color(0xFF2D7BA7), // Lighter blue (bottom)
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            const SizedBox(height: 20),
-            _buildSectionHeader('Account'),
-            _buildListTile(
-              title: 'Account Settings',
-              icon: Icons.person,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AccountSettingsPage()),
-                );
-              },
-            ),
-            _buildListTile(
-              title: 'Change Password',
-              icon: Icons.lock,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ChangePasswordPage()),
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-            _buildSectionHeader('Support'),
-            _buildListTile(
-              title: 'Help & Support',
-              icon: Icons.help,
-              onTap: () {
-                Navigator.push(
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Make Scaffold background transparent
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF0D2D56),
+          title: const Text(
+            'Settings',
+            style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ListView(
+            children: [
+              const SizedBox(height: 20),
+              _buildSectionHeader('Account'),
+              _buildListTile(
+                title: 'Account Settings',
+                icon: Icons.person,
+                onTap: () {
+                  Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => HelpSupportPage()),
-                );
-              },
-            ),
-            _buildListTile( // put it here the update button
-              title: 'Check for Updates',
-              icon: Icons.system_update,
-              onTap: () => fetchUpdate(context),
-            ),
-            _buildListTile(
-              title: 'About Us',
-              icon: Icons.info,
-              onTap: () {
-                 Navigator.push(
-                   context,
-                   MaterialPageRoute(builder: (context) => AboutUsPage()),
-                 );
-              },
-            ),
-          ],
+                    MaterialPageRoute(builder: (context) => AccountSettingsPage()),
+                  );
+                },
+              ),
+              _buildListTile(
+                title: 'Change Password',
+                icon: Icons.lock,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ChangePasswordPage()),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildSectionHeader('Support'),
+              _buildListTile(
+                title: 'Help & Support',
+                icon: Icons.help,
+                onTap: () {
+                  Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HelpSupportPage()),
+                  );
+                },
+              ),
+              _buildListTile(
+                title: 'Check for Updates',
+                icon: Icons.system_update,
+                onTap: () => fetchUpdate(context),
+              ),
+              _buildListTile(
+                title: 'About Us',
+                icon: Icons.info,
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AboutUsPage()),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -138,7 +147,7 @@ class _SettingsPageState extends State<SettingsPage> {
         style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: Colors.black87,
+          color: Colors.white,
         ),
       ),
     );

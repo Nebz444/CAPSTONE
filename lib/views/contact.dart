@@ -10,7 +10,6 @@ class ContactPage extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D2D56),
-        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         title: const Text(
           'Emergency Hotlines',
@@ -57,7 +56,7 @@ class ContactItem extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Cancel',),
           ),
           TextButton(
             onPressed: () async {

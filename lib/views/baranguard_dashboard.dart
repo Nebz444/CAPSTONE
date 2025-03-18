@@ -178,7 +178,7 @@ class _BaranguardDashboardState extends State<BaranguardDashboard> {
                                       backgroundImage: userProvider.user?.profileImage != null &&
                                           userProvider.user!.profileImage!.isNotEmpty
                                           ? NetworkImage(userProvider.user!.profileImage!)
-                                          : const AssetImage('lib/images/default_profile.png'),
+                                          : const AssetImage('lib/images/default_profile.png') as ImageProvider,
                                     ),
                                   ),
                                   const SizedBox(height: 16),

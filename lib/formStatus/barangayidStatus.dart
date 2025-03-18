@@ -22,15 +22,19 @@ class _BarangayIDStatusPageState extends State<BarangayIDStatusPage> {
   }
 
   Future<void> fetchBarangayIDRequests() async {
-    final url1 = Uri.parse('https://manibaugparalaya.com/API/getBarangayID.php?user_id=${widget.userId}');
-    final url2 = Uri.parse('https://manibaugparalaya.com/API/getBarangayID1.php?user_id=${widget.userId}');
+    final url1 = Uri.parse(
+        'https://manibaugparalaya.com/API/getBarangayID.php?user_id=${widget
+            .userId}');
+    final url2 = Uri.parse(
+        'https://manibaugparalaya.com/API/getBarangayID1.php?user_id=${widget
+            .userId}');
 
     try {
       print("Fetching Barangay ID data for user_id: ${widget.userId}");
 
       // Fetch both APIs in parallel
-      final response1 = await http.get(url1);
-      final response2 = await http.get(url2);
+      final response2 = await http.get(url1);
+      final response1 = await http.get(url2);
 
       print("Response1 Status: ${response1.statusCode}");
       print("Response2 Status: ${response2.statusCode}");
@@ -190,22 +194,31 @@ class _BarangayIDStatusPageState extends State<BarangayIDStatusPage> {
                   shape: BoxShape.circle,
                 ),
               ),
-              Text(status.toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+              Text(status.toUpperCase(), style: TextStyle(
+                  fontWeight: FontWeight.bold, color: Colors.black)),
               Spacer(),
               IconButton(
                 icon: Icon(Icons.note_add),
-                onPressed: () => _showAddNoteDialog(index, request['user_id'], id), // Pass index, user_id, and id
+                onPressed: () =>
+                    _showAddNoteDialog(index, request['user_id'],
+                        id), // Pass index, user_id, and id
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text("Name: $fullName", style: const TextStyle(color: Colors.black)),
-          Text("Address: $fullAddress", style: const TextStyle(color: Colors.black)),
-          Text("Age: $age | Gender: $gender | Status: $civilStatus", style: const TextStyle(color: Colors.black)),
-          Text("Birthplace: $birthplace | Birthday: $birthday", style: const TextStyle(color: Colors.black)),
-          Text("Height: $height ft | Weight: $weight kg", style: const TextStyle(color: Colors.black)),
-          Text("Contact: $contactNumber | Emergency: $emergencyNumber", style: const TextStyle(color: Colors.black)),
-          Text("Date Requested: $dateRequested", style: const TextStyle(color: Colors.black)),
+          Text("Address: $fullAddress",
+              style: const TextStyle(color: Colors.black)),
+          Text("Age: $age | Gender: $gender | Status: $civilStatus",
+              style: const TextStyle(color: Colors.black)),
+          Text("Birthplace: $birthplace | Birthday: $birthday",
+              style: const TextStyle(color: Colors.black)),
+          Text("Height: $height ft | Weight: $weight kg",
+              style: const TextStyle(color: Colors.black)),
+          Text("Contact: $contactNumber | Emergency: $emergencyNumber",
+              style: const TextStyle(color: Colors.black)),
+          Text("Date Requested: $dateRequested",
+              style: const TextStyle(color: Colors.black)),
           Text("Note: $note", style: const TextStyle(color: Colors.black)),
         ],
       ),
@@ -214,26 +227,54 @@ class _BarangayIDStatusPageState extends State<BarangayIDStatusPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF154068),
-      appBar: AppBar(
-        title: const Text('Barangay ID Status', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: const Color(0xFF154068),
-        elevation: 0,
-        centerTitle: true,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF0D2D56), // Dark blue (top)
+            Color(0xFF1E5A8A), // Medium blue (middle)
+            Color(0xFF2D7BA7), // Lighter blue (bottom)
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : barangayIDRequests.isEmpty
-            ? const Center(child: Text("No Barangay ID requests found", style: TextStyle(color: Colors.white)))
-            : ListView.builder(
-          itemCount: barangayIDRequests.length,
-          itemBuilder: (context, index) {
-            return _buildBarangayIDEntry(barangayIDRequests[index], index);
-          },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        // Make Scaffold background transparent
+        appBar: AppBar(
+          title: const Text(
+            'Barangay ID Status',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          backgroundColor: Colors.transparent,
+          // Make AppBar background transparent
+          elevation: 0,
+          // Remove shadow
+          centerTitle: true,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: isLoading
+              ? const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                  Colors.white), // White loading indicator
+            ),
+          )
+              : barangayIDRequests.isEmpty
+              ? const Center(
+            child: Text(
+              "No Barangay ID requests found",
+              style: TextStyle(color: Colors.white),
+            ),
+          )
+              : ListView.builder(
+            itemCount: barangayIDRequests.length,
+            itemBuilder: (context, index) {
+              return _buildBarangayIDEntry(barangayIDRequests[index], index);
+            },
+          ),
         ),
       ),
     );

@@ -99,6 +99,10 @@ class _ReportPageState extends State<ReportPage> {
             onPressed: () => Navigator.pop(context, ImageSource.camera),
             child: const Text('Camera'),
           ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+            child: const Text('Gallery'),
+          ),
         ],
       ),
     );

@@ -46,7 +46,6 @@ class _ReportStatusPageState extends State<ReportStatusPage> {
       backgroundColor: const Color(0xFF154068), // New background color
       appBar: AppBar(
         title: const Text('Report Status', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: const Color(0xFF154068),
         elevation: 0,
         centerTitle: true,

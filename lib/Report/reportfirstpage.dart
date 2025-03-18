@@ -9,15 +9,20 @@ class ReportFirstPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFFFF),
+        elevation: 0,
+        title: const Text(
+          'Reports',
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+        ),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Reports',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
             const SizedBox(height: 8),
             _buildReportOption(context, Icons.report, 'Submit a Report', const ReportPage()),
             _buildReportStatusOption(context),

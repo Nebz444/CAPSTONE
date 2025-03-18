@@ -12,8 +12,6 @@ import '../provider/user_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AccountSettingsPage extends StatefulWidget {
-  const AccountSettingsPage({super.key});
-
   @override
   _AccountSettingsPageState createState() => _AccountSettingsPageState();
 }
@@ -114,7 +112,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         );
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
+          SnackBar(content: Text('Profile updated successfully')),
         );
 
         setState(() {
@@ -211,20 +209,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     return null;
   }
 
-  Future<void> _removeProfileImage() async {
-    setState(() {
-      _profileImage = null;
-      user!.profileImage = null;
-    });
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('profileImage');
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile image removed')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -273,52 +257,28 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
               padding: const EdgeInsets.all(16.0),
               children: [
                 Center(
-                  child: Stack(
-                    children: [
-                      GestureDetector(
-                        onTap: _pickProfileImage,
-                        child: Container(
-                          width: 120, // Adjust size as needed
-                          height: 120, // Adjust size as needed
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white, // border color
-                              width: 4.0, // Border thickness
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 50, // Adjust size as needed
-                            backgroundColor: Colors.white, // Inner circle background color
-                            backgroundImage: _profileImage != null
-                                ? FileImage(_profileImage!)
-                                : (user?.profileImage != null && user!.profileImage!.isNotEmpty)
-                                ? NetworkImage(user!.profileImage!)
-                                : const AssetImage('lib/images/default_profile.png') as ImageProvider,
-                          ),
+                  child: GestureDetector(
+                    onTap: _pickProfileImage,
+                    child: Container(
+                      width: 120, // Adjust size as needed
+                      height: 120, // Adjust size as needed
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white, // border color
+                          width: 4.0, // Border thickness
                         ),
                       ),
-                      if (user?.profileImage != null || _profileImage != null)
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: GestureDetector(
-                            onTap: _removeProfileImage,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                      child: CircleAvatar(
+                        radius: 50, // Adjust size as needed
+                        backgroundColor: Colors.white, // Inner circle background color
+                        backgroundImage: _profileImage != null
+                            ? FileImage(_profileImage!) as ImageProvider
+                            : user?.profileImage != null
+                            ? NetworkImage(user!.profileImage!)
+                            : const AssetImage('lib/images/default_profile.png'),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -337,10 +297,12 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 _buildInfoRow("Birthdate", birthday),
                 _buildInfoRow("Username", user?.username),
                 _buildInfoRow("Gender", user?.gender),
-                _buildInfoRow("Email", user?.email),
                 _isEditing
                     ? _buildEditableStringField("Mobile Number", mobileNumberController)
                     : _buildInfoRow("Mobile Number", user?.mobileNumber),
+                _isEditing
+                    ? _buildEditableStringField("Email", emailController)
+                    : _buildInfoRow("Email", user?.email),
                 _isEditing
                     ? _buildEditableStringField("Home Address", homeAddressController)
                     : _buildInfoRow("Home Address", user?.homeAddress),

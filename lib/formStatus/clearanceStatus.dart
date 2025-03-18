@@ -29,8 +29,8 @@ class _ClearanceStatusPageState extends State<ClearanceStatusPage> {
       print("Fetching Clearance data for user_id: ${widget.userId}");
 
       // Fetch both APIs in parallel
-      final response1 = await http.get(url1);
-      final response2 = await http.get(url2);
+      final response2 = await http.get(url1);
+      final response1 = await http.get(url2);
 
       print("Response1 Status: ${response1.statusCode}");
       print("Response2 Status: ${response2.statusCode}");
@@ -213,8 +213,7 @@ class _ClearanceStatusPageState extends State<ClearanceStatusPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF154068),
       appBar: AppBar(
-        title: const Text('Clearance Status', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('Clearance Status', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF154068),
         elevation: 0,
         centerTitle: true,
